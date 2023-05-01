@@ -6,7 +6,7 @@ from pathlib import Path
 
 load_dotenv()
 
-IGNORED_UPDATE_EVENT_KEYS = ["modLogs", "description", "attachments"]
+IGNORED_UPDATE_EVENT_KEYS = ["modlogs", "description", "attachments"]
 webhook = discord.SyncWebhook.from_url(os.getenv("WEBHOOK_URL"))
 
 
@@ -40,7 +40,7 @@ def send_new_issue(issue):
 
 
 def send_update_issue(diff, issue):
-    description = f"[click here to see issue in website](http://localhost:3000/issue/{issue['_id']})"
+    description = f"[click here to see issue in website](https://issue-tracker-front.vercel.app/issue/{issue['_id']})"
     ignored_update_list = []
     message_list = []
     discord_id = issue["playerData"]["id"]

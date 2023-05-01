@@ -22,7 +22,7 @@ async def get_code_run_exchange(code):
         "client_secret": SECRET,
         "grant_type": "authorization_code",
         "code": code,
-        "redirect_uri": "http://127.0.0.1:3000",
+        "redirect_uri": "https://issue-tracker-front.vercel.app/",
     }
     headers = {"Content-Type": "application/x-www-form-urlencoded"}
     r = requests.post(

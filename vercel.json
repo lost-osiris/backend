@@ -1,0 +1,9 @@
+{
+  "builds": [
+    {
+      "src": "src/ticketing_system/api/index.py",
+      "use": "@vercel/python"
+    }
+  ],
+  "routes": [{ "src": "/(.*)", "dest": "src/ticketing_system/api/index.py" }]
+}
