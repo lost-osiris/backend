@@ -15,20 +15,25 @@ def create_embed(message, color, title):
 
 
 def send_new_issue(issue):
+    description = f"[click here to see issue in website](https://issue-tracker-front.vercel.app/issue/{issue['_id']})"
     discord_id = issue["playerData"]["id"]
     discord_name = issue["playerData"]["name"]
     discord_avatar_id = issue["playerData"]["avatar"]
+    category = issue['category']
+
+    if "%20" in category:
+        category = category.replace("%20", " ")
 
     if issue["type"] == "bug":
         color = Color.red()
     else:
         color = Color.yellow()
 
-    embed = discord.Embed(color=color)
+    embed = discord.Embed(color=color, description=description)
 
     embed.add_field(name="Summary", value=issue["summary"], inline=False)
     embed.add_field(name="Type", value=issue["type"], inline=False)
-    embed.add_field(name="Category", value=issue["category"], inline=True)
+    embed.add_field(name="Category", value=category, inline=True)
     embed.add_field(name="Version", value=issue["version"], inline=True)
 
     embed.set_author(
@@ -65,7 +70,11 @@ def send_update_issue(diff, issue):
 
     if len(ignored_update_list) > 0:
         for message in message_list:
-            for k, v in message.items():
+            for k, v in message.items():  
+                if "%20" in v:
+                    message[k] = v.replace("%20", " ")
+                    v = message[k]
+
                 if k == "summary":
                     embed.add_field(
                         name=k,
@@ -90,6 +99,8 @@ def send_update_issue(diff, issue):
     elif len(ignored_update_list) == 0:
         for message in message_list:
             for k, v in message.items():
+                if "%20" in v:
+                    v = v.replace("%20", " ")
                 if k == "summary":
                     embed.add_field(
                         name=k,
@@ -112,6 +123,10 @@ def send_deleted_issue(issue):
     discord_id = issue["playerData"]["id"]
     discord_name = issue["playerData"]["name"]
     discord_avatar_id = issue["playerData"]["avatar"]
+    category = issue['category']
+
+    if "%20" in category:
+        category = category.replace("%20", " ")
 
     color = Color.red()
 
@@ -120,7 +135,7 @@ def send_deleted_issue(issue):
     embed.add_field(name="Summary", value=issue["summary"], inline=False)
     embed.add_field(name="Player", value=issue["playerData"]["name"], inline=True)
     embed.add_field(name="Type", value=issue["type"], inline=False)
-    embed.add_field(name="Category", value=issue["category"], inline=True)
+    embed.add_field(name="Category", value=category, inline=True)
     embed.add_field(name="Version", value=issue["version"], inline=True)
 
     embed.set_author(

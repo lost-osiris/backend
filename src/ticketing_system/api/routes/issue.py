@@ -12,6 +12,10 @@ db = utils.get_db_client()
 async def get_one(issue_id):
     return utils.prepare_json(db.issues.find_one({"_id": ObjectId(issue_id)}))
 
+@router.get("/issue/{issue_id}/modlogs")
+async def get_one(issue_id):
+    return utils.prepare_json(db.issues.find_one({"_id": ObjectId(issue_id)}, {"modlogs": 1}))
+
 
 @router.post("/issue/findexact")
 async def get_exact(request: Request):
