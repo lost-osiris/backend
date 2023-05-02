@@ -44,16 +44,17 @@ def send_new_issue(issue):
     webhook.send("**New Issue Created**", embed=embed)
 
 
-def send_update_issue(diff, issue):
+def send_update_issue(diff, issue, user_info):
     description = f"[click here to see issue in website](https://issue-tracker-front.vercel.app/issue/{issue['_id']})"
     ignored_update_list = []
     message_list = []
-    discord_id = issue["playerData"]["id"]
-    discord_name = issue["playerData"]["name"]
-    discord_avatar_id = issue["playerData"]["avatar"]
+    discord_id = user_info['id']
+    discord_name = user_info['username']
+    author_name = issue["playerData"]["name"]
+    discord_avatar_id = user_info['avatar']
 
     embed = discord.Embed(
-        title="Issue Updated!",
+        title=f"{author_name}'s Issue was Updated!",
         description=description,
         color=Color.blurple(),
     )
@@ -119,10 +120,11 @@ def send_update_issue(diff, issue):
         webhook.send(embed=embed)
 
 
-def send_deleted_issue(issue):
-    discord_id = issue["playerData"]["id"]
-    discord_name = issue["playerData"]["name"]
-    discord_avatar_id = issue["playerData"]["avatar"]
+def send_deleted_issue(issue, user_info):
+    discord_id = user_info['id']
+    discord_name = user_info['username']
+    author_name = issue["playerData"]["name"]
+    discord_avatar_id = user_info['avatar']
     category = issue['category']
 
     if "%20" in category:
@@ -130,7 +132,7 @@ def send_deleted_issue(issue):
 
     color = Color.red()
 
-    embed = discord.Embed(color=color)
+    embed = discord.Embed(color=color, title=f"{author_name}'s Issue was Deleted!")
 
     embed.add_field(name="Summary", value=issue["summary"], inline=False)
     embed.add_field(name="Player", value=issue["playerData"]["name"], inline=True)

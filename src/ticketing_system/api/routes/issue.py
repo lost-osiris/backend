@@ -29,23 +29,33 @@ async def get_exact(request: Request):
 @router.put("/issue/{issue_id}")
 async def update_issue(issue_id, request: Request):
     req_info = await request.json()
+    issue_info = req_info['issue']
+    issue_info = {k: v for k, v in issue_info.items() if k != 'playerData'}
+    user_info = req_info['userInfo']
+    user_info = {k: user_info['data'][k] for k in ['id', 'avatar', 'username']}
+
+    print(req_info)
+    print('---------')
+    print(issue_info)
+    
+
 
     issue_id = ObjectId(issue_id)
-    req_info.pop("_id")
+    issue_info.pop("_id")
 
     issue = db.issues.find_one_and_update(
-        {"_id": issue_id}, {"$set": req_info}, upsert=False
+        {"_id": issue_id}, {"$set": issue_info}, upsert=False
     )
 
     diff = []
 
-    for key, value in req_info.items():
+    for key, value in issue_info.items():
         if value == issue[key]:
             continue
 
         diff.append({"new": value, "old": issue[key], "key": key})
 
-    webhooks.send_update_issue(diff, issue)
+    webhooks.send_update_issue(diff, issue, user_info)
 
     return utils.prepare_json(issue)
 
@@ -67,7 +77,11 @@ async def create_issue(request: Request):
 
 
 @router.delete("/issue/{issue_id}")
-async def delete_issue(issue_id):
+async def delete_issue(issue_id, request: Request):
+    req_info = await request.json()
+    user_info = {k: req_info['data'][k] for k in ['id', 'avatar', 'username']}
+
     issue = db.issues.find_one({"_id": ObjectId(issue_id)})
     db.issues.find_one_and_delete({"_id": ObjectId(issue_id)})
-    webhooks.send_deleted_issue(issue)
+
+    webhooks.send_deleted_issue(issue, user_info)
