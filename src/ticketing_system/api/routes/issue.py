@@ -29,16 +29,14 @@ async def get_exact(request: Request):
 @router.put("/issue/{issue_id}")
 async def update_issue(issue_id, request: Request):
     req_info = await request.json()
+
     issue_info = req_info['issue']
-    issue_info = {k: v for k, v in issue_info.items() if k != 'playerData'}
+    issue_info['category'] = issue_info['category'].lower()
     user_info = req_info['userInfo']
-    user_info = {k: user_info['data'][k] for k in ['id', 'avatar', 'username']}
 
-    print(req_info)
-    print('---------')
-    print(issue_info)
     
-
+    issue_info = {k: v for k, v in issue_info.items() if k != 'playerData'}
+    user_info = {k: user_info[k] for k in ['id', 'avatar', 'username']}
 
     issue_id = ObjectId(issue_id)
     issue_info.pop("_id")
@@ -63,6 +61,7 @@ async def update_issue(issue_id, request: Request):
 @router.post("/issue")
 async def create_issue(request: Request):
     req_info = await request.json()
+    req_info['category'] = req_info['category'].lower()
 
     # TODO: check to see if user_id is allowed to create this issue on the project_name
 
@@ -73,13 +72,13 @@ async def create_issue(request: Request):
         raise HTTPException(status_code=503, detail="Unable write issue to database")
 
     webhooks.send_new_issue(req_info)
-    return utils.json_ready(issue.inserted_id)
+    return utils.prepare_json(issue.inserted_id)
 
 
 @router.delete("/issue/{issue_id}")
 async def delete_issue(issue_id, request: Request):
     req_info = await request.json()
-    user_info = {k: req_info['data'][k] for k in ['id', 'avatar', 'username']}
+    user_info = {k: req_info[k] for k in ['id', 'avatar', 'username']}
 
     issue = db.issues.find_one({"_id": ObjectId(issue_id)})
     db.issues.find_one_and_delete({"_id": ObjectId(issue_id)})

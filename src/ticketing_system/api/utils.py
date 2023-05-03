@@ -14,7 +14,7 @@ def alphanumeric_check(data):
         return False
 
 
-def json_ready(data):
+def _json_ready(data):
     if isinstance(data, ObjectId):
         return str(data)
     # elif instance(data, datetime.datetime):
@@ -34,7 +34,7 @@ def prepare_json(data):
             ):
                 output[key] = prepare_json(value)
             else:
-                output[key] = json_ready(value)
+                output[key] = _json_ready(value)
 
         return output
 
@@ -48,11 +48,11 @@ def prepare_json(data):
             ):
                 output.append(prepare_json(value))
             else:
-                output.append(json_ready(value))
+                output.append(_json_ready(value))
 
         return output
     else:
-        return json_ready(data)
+        return _json_ready(data)
 
 
 def get_db_client(db="test"):

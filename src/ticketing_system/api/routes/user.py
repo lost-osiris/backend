@@ -10,6 +10,7 @@ import time
 
 SECRET = os.getenv("CLIENT_SECRET")
 APP_ID = os.getenv("APPLICATION_ID")
+PROD_AUTH_REDIRECT = "https://issue-tracker-front.vercel.app/"
 router = APIRouter(prefix="/api")
 db = utils.get_db_client()
 load_dotenv()
@@ -22,8 +23,9 @@ async def get_code_run_exchange(code):
         "client_secret": SECRET,
         "grant_type": "authorization_code",
         "code": code,
-        "redirect_uri": "https://issue-tracker-front.vercel.app/",
+        "redirect_uri": "http://localhost:3000/" if os.getenv("IS_DEV") else PROD_AUTH_REDIRECT,
     }
+
     headers = {"Content-Type": "application/x-www-form-urlencoded"}
     r = requests.post(
         "https://discord.com/api/v8/oauth2/token",
@@ -31,6 +33,8 @@ async def get_code_run_exchange(code):
         headers=headers,
     )
     r.raise_for_status()
+
+    r = requests.get("https://discord.com/api/v8/users/@me", headers={"Authorization": f"Bearer {r.json()['access_token']}"})
     return r.json()
 
 

@@ -4,6 +4,7 @@ from .. import utils
 from .. import webhooks
 import traceback
 import time
+import urllib.parse
 
 router = APIRouter(prefix="/api")
 db = utils.get_db_client()
@@ -48,7 +49,7 @@ async def get_project(project_name):
     project = db.projects.find_one({"name": project_name})
 
     if project:
-        return utils.json_ready(
+        return utils.prepare_json(
             {
                 **project,
                 "webhooks": [i for i in db.webhooks.find({"name": project_name})],
@@ -149,7 +150,7 @@ async def create_categories(request: Request, name: str):
 @router.get("/project/{project_name}/category/{category}/issues")
 async def get_all_by_category(project_name: str, category: str):
     # issues = list(db.issues.find({"project_name": project_name, "category": category}))
-    issues = list(db.issues.find({"category": category}, {"modlogs": 0}))
+    issues = list(db.issues.find({"category": urllib.parse.unquote(category)}, {"modlogs": 0}))
     return utils.prepare_json(issues)
 
 
