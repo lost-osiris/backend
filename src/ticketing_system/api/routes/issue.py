@@ -32,7 +32,7 @@ async def update_issue(issue_id, request: Request):
 
     issue_info = req_info['issue']
     issue_info['category'] = issue_info['category'].lower()
-    user_info = req_info['userInfo']['data']
+    user_info = req_info['userInfo']
 
 
     
