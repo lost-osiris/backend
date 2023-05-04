@@ -10,7 +10,7 @@ import time
 
 SECRET = os.getenv("CLIENT_SECRET")
 APP_ID = os.getenv("APPLICATION_ID")
-PROD_AUTH_REDIRECT = "https://issue-tracker-front.vercel.app/"
+PROD_AUTH_REDIRECT = "https://modforge.gg/"
 router = APIRouter(prefix="/api")
 db = utils.get_db_client()
 load_dotenv()
@@ -35,6 +35,7 @@ async def get_code_run_exchange(code):
     r.raise_for_status()
 
     r = requests.get("https://discord.com/api/v8/users/@me", headers={"Authorization": f"Bearer {r.json()['access_token']}"})
+
     return r.json()
 
 

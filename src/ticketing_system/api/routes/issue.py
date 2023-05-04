@@ -32,11 +32,13 @@ async def update_issue(issue_id, request: Request):
 
     issue_info = req_info['issue']
     issue_info['category'] = issue_info['category'].lower()
-    user_info = req_info['userInfo']
+    user_info = req_info['userInfo']['data']
+
 
     
     issue_info = {k: v for k, v in issue_info.items() if k != 'playerData'}
     user_info = {k: user_info[k] for k in ['id', 'avatar', 'username']}
+
 
     issue_id = ObjectId(issue_id)
     issue_info.pop("_id")
