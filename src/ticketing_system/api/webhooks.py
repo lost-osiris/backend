@@ -7,7 +7,9 @@ from pathlib import Path
 load_dotenv()
 
 IGNORED_UPDATE_EVENT_KEYS = ["modlogs", "description", "attachments"]
-webhook = discord.SyncWebhook.from_url(os.getenv("WEBHOOK_URL"))
+# webhook = discord.SyncWebhook.from_url(os.getenv("WEBHOOK_URL"))
+webhook = discord.SyncWebhook.from_url("https://discordapp.com/api/webhooks/1075674946715525120/uHhuAUGWxX3-QfipUTapVmmHK0Ch9L31r0zkpqB7zj8xhTvH5y2kuAb7XZUtxmlEtg-3")
+
 
 
 def create_embed(message, color, title):
@@ -15,7 +17,8 @@ def create_embed(message, color, title):
 
 
 def send_new_issue(issue):
-    description = f"[click here to see issue in website](https://issue-tracker-front.vercel.app/issue/{issue['_id']})"
+    
+    description = f"[click here to see issue in website](https://modforge.gg/issue/{issue['_id']})"
     discord_id = issue["playerData"]["id"]
     discord_name = issue["playerData"]["name"]
     discord_avatar_id = issue["playerData"]["avatar"]
@@ -29,7 +32,7 @@ def send_new_issue(issue):
     else:
         color = Color.yellow()
 
-    embed = discord.Embed(color=color, description=description)
+    embed = discord.Embed( title="Issue Created",color=color, description=description)
 
     embed.add_field(name="Summary", value=issue["summary"], inline=False)
     embed.add_field(name="Type", value=issue["type"], inline=False)
@@ -41,11 +44,11 @@ def send_new_issue(issue):
         icon_url=f"https://cdn.discordapp.com/avatars/{discord_id}/{discord_avatar_id}.png",
     )
 
-    webhook.send("**New Issue Created**", embed=embed)
+    webhook.send(embed=embed)
 
 
 def send_update_issue(diff, issue, user_info):
-    description = f"[click here to see issue in website](https://issue-tracker-front.vercel.app/issue/{issue['_id']})"
+    description = f"[click here to see issue in website](https://modforge.gg/issue/{issue['_id']})"
     ignored_update_list = []
     message_list = []
     discord_id = user_info['id']
@@ -130,7 +133,7 @@ def send_deleted_issue(issue, user_info):
     if "%20" in category:
         category = category.replace("%20", " ")
 
-    color = Color.red()
+    color = Color.green()
 
     embed = discord.Embed(color=color, title=f"{author_name}'s Issue was Deleted!")
 
@@ -144,4 +147,4 @@ def send_deleted_issue(issue, user_info):
         name=discord_name,
         icon_url=f"https://cdn.discordapp.com/avatars/{discord_id}/{discord_avatar_id}.png",
     )
-    webhook.send("**Issue Deleted**", embed=embed)
+    webhook.send(embed=embed)
