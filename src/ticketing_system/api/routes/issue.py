@@ -4,6 +4,7 @@ from .. import utils
 from .. import webhooks
 import traceback
 
+
 router = APIRouter(prefix="/api")
 db = utils.get_db_client()
 
@@ -28,6 +29,8 @@ async def get_exact(request: Request):
 
 @router.put("/issue/{issue_id}")
 async def update_issue(issue_id, request: Request):
+
+
     req_info = await request.json()
 
     issue_info = req_info['issue']
@@ -55,6 +58,7 @@ async def update_issue(issue_id, request: Request):
 
         diff.append({"new": value, "old": issue[key], "key": key})
 
+    
     webhooks.send_update_issue(diff, issue, user_info)
 
     return utils.prepare_json(issue)

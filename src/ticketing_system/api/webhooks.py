@@ -3,6 +3,7 @@ import os
 from discord import Color
 from dotenv import load_dotenv
 from pathlib import Path
+from . import utils
 
 load_dotenv()
 
@@ -48,7 +49,8 @@ def send_new_issue(issue):
 
 
 def send_update_issue(diff, issue, user_info):
-    description = f"[click here to see issue in website](https://modforge.gg/issue/{issue['_id']})"
+    summary_for_title = utils.to_title_case(issue['category'])
+    description = f"[{issue['summary']}](https://modforge.gg/issue/{issue['_id']})"
     ignored_update_list = []
     message_list = []
     discord_id = user_info['id']
@@ -57,7 +59,7 @@ def send_update_issue(diff, issue, user_info):
     discord_avatar_id = user_info['avatar']
 
     embed = discord.Embed(
-        title=f"{author_name}'s Issue was Updated!",
+        title=f"{author_name}'s Issue on {summary_for_title} was Updated!",
         description=description,
         color=Color.blurple(),
     )

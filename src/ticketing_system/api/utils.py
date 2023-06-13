@@ -3,8 +3,16 @@ import pymongo
 from dotenv import load_dotenv
 from bson import ObjectId
 from urllib.parse import quote_plus
+import re
 
 load_dotenv()
+
+
+
+def to_title_case(string):
+    string = string.replace("-", " ")
+    string = re.sub(r'\w\S*', lambda txt: txt.group(0).capitalize(), string)
+    return string
 
 
 def alphanumeric_check(data):
