@@ -8,6 +8,15 @@ import traceback
 router = APIRouter(prefix="/api")
 db = utils.get_db_client()
 
+@router.get('/issue/updateavs/{discord_id}/{avatar_id}')
+async def update_all_avatars(discord_id, avatar_id):
+
+    print("hello!")
+    print("discord id", discord_id)
+    print("avatar", avatar_id)
+
+    return utils.prepare_json(db.issues.find({"playerData.name": "Croissant"}))
+
 
 @router.get("/issue/{issue_id}")
 async def get_one(issue_id):

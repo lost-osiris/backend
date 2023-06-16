@@ -4,6 +4,7 @@ from dotenv import load_dotenv
 from bson import ObjectId
 from urllib.parse import quote_plus
 import re
+from pymongo.cursor import Cursor
 
 load_dotenv()
 
@@ -32,6 +33,9 @@ def _json_ready(data):
 
 
 def prepare_json(data):
+    if isinstance(data, Cursor):
+        return prepare_json(list(data))
+
     if isinstance(data, dict):
         output = {}
         for key, value in data.items():

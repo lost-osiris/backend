@@ -150,7 +150,7 @@ async def create_categories(request: Request, name: str):
 @router.get("/project/{project_name}/category/{category}/issues")
 async def get_all_by_category(project_name: str, category: str):
     # issues = list(db.issues.find({"project_name": project_name, "category": category}))
-    issues = list(db.issues.find({"category": urllib.parse.unquote(category)}, {"modlogs": 0}))
+    issues = db.issues.find({"category": urllib.parse.unquote(category)}, {"modlogs": 0})
     return utils.prepare_json(issues)
 
 
