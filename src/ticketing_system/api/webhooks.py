@@ -9,8 +9,9 @@ load_dotenv()
 
 IGNORED_UPDATE_EVENT_KEYS = ["modlogs", "description", "attachments"]
 # webhook = discord.SyncWebhook.from_url(os.getenv("WEBHOOK_URL"))
-webhook = discord.SyncWebhook.from_url("https://discordapp.com/api/webhooks/1075674946715525120/uHhuAUGWxX3-QfipUTapVmmHK0Ch9L31r0zkpqB7zj8xhTvH5y2kuAb7XZUtxmlEtg-3")
-
+webhook = discord.SyncWebhook.from_url(
+    "https://discordapp.com/api/webhooks/1075674946715525120/uHhuAUGWxX3-QfipUTapVmmHK0Ch9L31r0zkpqB7zj8xhTvH5y2kuAb7XZUtxmlEtg-3"
+)
 
 
 def create_embed(message, color, title):
@@ -18,12 +19,11 @@ def create_embed(message, color, title):
 
 
 def send_new_issue(issue):
-    
     description = f"[click here to see issue in website](https://modforge.gg/issue/{issue['_id']})"
     discord_id = issue["playerData"]["id"]
     discord_name = issue["playerData"]["name"]
     discord_avatar_id = issue["playerData"]["avatar"]
-    category = issue['category']
+    category = issue["category"]
 
     if "%20" in category:
         category = category.replace("%20", " ")
@@ -33,7 +33,7 @@ def send_new_issue(issue):
     else:
         color = Color.yellow()
 
-    embed = discord.Embed( title="Issue Created",color=color, description=description)
+    embed = discord.Embed(title="Issue Created", color=color, description=description)
 
     embed.add_field(name="Summary", value=issue["summary"], inline=False)
     embed.add_field(name="Type", value=issue["type"], inline=False)
@@ -49,14 +49,14 @@ def send_new_issue(issue):
 
 
 def send_update_issue(diff, issue, user_info):
-    summary_for_title = utils.to_title_case(issue['category'])
+    summary_for_title = utils.to_title_case(issue["category"])
     description = f"[{issue['summary']}](https://modforge.gg/issue/{issue['_id']})"
     ignored_update_list = []
     message_list = []
-    discord_id = user_info['id']
-    discord_name = user_info['username']
+    discord_id = user_info["id"]
+    discord_name = user_info["username"]
     author_name = issue["playerData"]["name"]
-    discord_avatar_id = user_info['avatar']
+    discord_avatar_id = user_info["avatar"]
 
     embed = discord.Embed(
         title=f"{author_name}'s Issue on {summary_for_title} was Updated!",
@@ -76,7 +76,7 @@ def send_update_issue(diff, issue, user_info):
 
     if len(ignored_update_list) > 0:
         for message in message_list:
-            for k, v in message.items():  
+            for k, v in message.items():
                 if "%20" in v:
                     message[k] = v.replace("%20", " ")
                     v = message[k]
@@ -126,11 +126,11 @@ def send_update_issue(diff, issue, user_info):
 
 
 def send_deleted_issue(issue, user_info):
-    discord_id = user_info['id']
-    discord_name = user_info['username']
+    discord_id = user_info["id"]
+    discord_name = user_info["username"]
     author_name = issue["playerData"]["name"]
-    discord_avatar_id = user_info['avatar']
-    category = issue['category']
+    discord_avatar_id = user_info["avatar"]
+    category = issue["category"]
 
     if "%20" in category:
         category = category.replace("%20", " ")

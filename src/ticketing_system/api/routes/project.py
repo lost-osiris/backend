@@ -44,15 +44,16 @@ async def get_all_projects():
     return utils.prepare_json(projects)
 
 
-@router.get("/project/{project_name}")
-async def get_project(project_name):
-    project = db.projects.find_one({"name": project_name})
+@router.get("/project/{project_id}")
+async def get_project(project_id):
+    project = db.projects.find_one({"_id": ObjectId(project_id)})
 
     if project:
         return utils.prepare_json(
             {
                 **project,
-                "webhooks": [i for i in db.webhooks.find({"name": project_name})],
+                # TODO: use project id for fetching discord bot
+                # "webhooks": [i for i in db.webhooks.find({"name": project["name"]})],
             }
         )
 
@@ -89,25 +90,20 @@ async def create_project_webhook(request: Request):
         )
 
 
-@router.post("/project/contributors")
-async def update_contributors(request: Request):
+@router.put("/project/members/waitlist")
+async def members_waitlist(request: Request):
     req_info = await request.json()
     find_project = db.projects.find_one({"name": req_info["project_name"]})
 
-    if find_project and req_info["user_id"] not in find_project:
+    if find_project and req_info["discord_id"] not in find_project:
         db.projects.update_one(
             {"name": req_info["project_name"]},
-            {"$push": {"contributors": req_info["user_id"]}},
+            {"$push": {"members": req_info["discord_id"]}},
         )
-    elif find_project and req_info["user_id"] in find_project:
+    elif find_project and req_info["discord_id"] in find_project:
         raise HTTPException(
             status_code=404,
-            detail=f"User already a contributor in project",
-        )
-    else:
-        raise HTTPException(
-            status_code=503,
-            detail=f"Unable write webhook for channel to database",
+            detail=f"User already a member of this project",
         )
 
 
@@ -150,7 +146,9 @@ async def create_categories(request: Request, name: str):
 @router.get("/project/{project_name}/category/{category}/issues")
 async def get_all_by_category(project_name: str, category: str):
     # issues = list(db.issues.find({"project_name": project_name, "category": category}))
-    issues = db.issues.find({"category": urllib.parse.unquote(category)}, {"modlogs": 0})
+    issues = db.issues.find(
+        {"category": urllib.parse.unquote(category)}, {"modlogs": 0}
+    )
     return utils.prepare_json(issues)
 
 

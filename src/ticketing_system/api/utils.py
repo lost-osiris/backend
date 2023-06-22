@@ -9,10 +9,9 @@ from pymongo.cursor import Cursor
 load_dotenv()
 
 
-
 def to_title_case(string):
     string = string.replace("-", " ")
-    string = re.sub(r'\w\S*', lambda txt: txt.group(0).capitalize(), string)
+    string = re.sub(r"\w\S*", lambda txt: txt.group(0).capitalize(), string)
     return string
 
 
@@ -38,15 +37,15 @@ def prepare_json(data):
 
     if isinstance(data, dict):
         output = {}
-        for key, value in data.items():
-            if (
-                isinstance(value, dict)
-                or isinstance(value, list)
-                or isinstance(value, set)
-            ):
-                output[key] = prepare_json(value)
+        for k, v in data.items():
+            key = k
+            if k == "_id":
+                key = "id"
+
+            if isinstance(v, dict) or isinstance(v, list) or isinstance(v, set):
+                output[key] = prepare_json(v)
             else:
-                output[key] = _json_ready(value)
+                output[key] = _json_ready(v)
 
         return output
 

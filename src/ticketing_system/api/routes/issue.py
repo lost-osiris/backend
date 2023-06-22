@@ -8,9 +8,9 @@ import traceback
 router = APIRouter(prefix="/api")
 db = utils.get_db_client()
 
-@router.get('/issue/updateavs/{discord_id}/{avatar_id}')
-async def update_all_avatars(discord_id, avatar_id):
 
+@router.get("/issue/updateavs/{discord_id}/{avatar_id}")
+async def update_all_avatars(discord_id, avatar_id):
     print("hello!")
     print("discord id", discord_id)
     print("avatar", avatar_id)
@@ -22,9 +22,12 @@ async def update_all_avatars(discord_id, avatar_id):
 async def get_one(issue_id):
     return utils.prepare_json(db.issues.find_one({"_id": ObjectId(issue_id)}))
 
+
 @router.get("/issue/{issue_id}/modlogs")
 async def get_one(issue_id):
-    return utils.prepare_json(db.issues.find_one({"_id": ObjectId(issue_id)}, {"modlogs": 1}))
+    return utils.prepare_json(
+        db.issues.find_one({"_id": ObjectId(issue_id)}, {"modlogs": 1})
+    )
 
 
 @router.post("/issue/findexact")
@@ -38,19 +41,14 @@ async def get_exact(request: Request):
 
 @router.put("/issue/{issue_id}")
 async def update_issue(issue_id, request: Request):
-
-
     req_info = await request.json()
 
-    issue_info = req_info['issue']
-    issue_info['category'] = issue_info['category'].lower()
-    user_info = req_info['userInfo']
+    issue_info = req_info["issue"]
+    issue_info["category"] = issue_info["category"].lower()
+    user_info = req_info["userInfo"]
 
-
-    
-    issue_info = {k: v for k, v in issue_info.items() if k != 'playerData'}
-    user_info = {k: user_info[k] for k in ['id', 'avatar', 'username']}
-
+    issue_info = {k: v for k, v in issue_info.items() if k != "playerData"}
+    user_info = {k: user_info[k] for k in ["id", "avatar", "username"]}
 
     issue_id = ObjectId(issue_id)
     issue_info.pop("_id")
@@ -67,7 +65,6 @@ async def update_issue(issue_id, request: Request):
 
         diff.append({"new": value, "old": issue[key], "key": key})
 
-    
     webhooks.send_update_issue(diff, issue, user_info)
 
     return utils.prepare_json(issue)
@@ -76,7 +73,7 @@ async def update_issue(issue_id, request: Request):
 @router.post("/issue")
 async def create_issue(request: Request):
     req_info = await request.json()
-    req_info['category'] = req_info['category'].lower()
+    req_info["category"] = req_info["category"].lower()
 
     # TODO: check to see if user_id is allowed to create this issue on the project_name
 
@@ -93,7 +90,7 @@ async def create_issue(request: Request):
 @router.delete("/issue/{issue_id}")
 async def delete_issue(issue_id, request: Request):
     req_info = await request.json()
-    user_info = {k: req_info[k] for k in ['id', 'avatar', 'username']}
+    user_info = {k: req_info[k] for k in ["id", "avatar", "username"]}
 
     issue = db.issues.find_one({"_id": ObjectId(issue_id)})
     db.issues.find_one_and_delete({"_id": ObjectId(issue_id)})
