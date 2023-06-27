@@ -90,20 +90,95 @@ async def create_project_webhook(request: Request):
         )
 
 
-@router.put("/project/members/waitlist")
-async def members_waitlist(request: Request):
-    req_info = await request.json()
-    find_project = db.projects.find_one({"name": req_info["project_name"]})
+@router.get("/project/{project_name}/waitlist")
+async def get_waitlist(project_name):
+    return utils.prepare_json(
+        db.projects.find_one({"name": project_name}, {"waitlist": 1, "_id": 0})
+    )
 
-    if find_project and req_info["discord_id"] not in find_project:
-        db.projects.update_one(
-            {"name": req_info["project_name"]},
-            {"$push": {"members": req_info["discord_id"]}},
-        )
-    elif find_project and req_info["discord_id"] in find_project:
+
+@router.post("/project/{project_name}/members/joinwaitlist")
+async def join_waitlist(project_name: str, request: Request):
+    req_info = await request.json()
+    find_member = db.projects.find(
+        {"name": project_name},
+        {"_id": 0, "members": {"$elemMatch": {"discord_id": req_info["discord_id"]}}},
+    )
+
+    if find_member[0]:
         raise HTTPException(
-            status_code=404,
+            status_code=503,
             detail=f"User already a member of this project",
+        )
+
+    elif not find_member[0]:
+        find_waitlist = db.projects.find(
+            {"name": project_name},
+            {
+                "_id": 0,
+                "waitlist": {"$elemMatch": {"discord_id": req_info["discord_id"]}},
+            },
+        )
+        if find_waitlist[0]:
+            raise HTTPException(
+                status_code=503,
+                detail=f"User already on the waitlist",
+            )
+        else:
+            insert_info = {
+                "discord_id": req_info["discord_id"],
+                "name": req_info["name"],
+            }
+            db.projects.update_one(
+                {"name": project_name},
+                {"$push": {"waitlist": insert_info}},
+            )
+            return req_info
+
+
+@router.put("/project/{project_name}/members/updatewaitlist")
+async def update_waitlist(project_name: str, request: Request):
+    req_info = await request.json()
+    find_member = db.projects.find(
+        {"name": project_name},
+        {"_id": 0, "members": {"$elemMatch": {"discord_id": req_info["discord_id"]}}},
+    )
+
+    if find_member[0]:
+        raise HTTPException(
+            status_code=503,
+            detail=f"User already a member of this project",
+        )
+
+    elif not find_member[0]:
+        insert_info = {"discord_id": req_info["discord_id"], "role": req_info["role"]}
+        db.projects.update_one(
+            {"name": project_name},
+            {"$push": {"members": insert_info}},
+        )
+        db.projects.update_one(
+            {
+                "name": project_name,
+            },
+            {"$pull": {"waitlist": {"discord_id": req_info["discord_id"]}}},
+        )
+        return req_info
+
+
+@router.get("/project/{project_name}/member/{discord_id}", status_code=204)
+async def find_member(project_name: str, discord_id: str):
+    find_member = db.projects.find(
+        {"name": project_name},
+        {"_id": 0, "members": {"$elemMatch": {"discord_id": discord_id}}},
+    )
+
+    if find_member[0]:
+        return
+
+    if not find_member[0]:
+        raise HTTPException(
+            status_code=503,
+            detail=f"User not found in project",
         )
 
 

@@ -15,7 +15,7 @@ COMMAND_PREFIX = "!"
 TOKEN = os.getenv("TOKEN")
 SECRET = os.getenv("CLIENT_SECRET")
 MY_GUILD = discord.Object(id=636623317180088321)
-COOLDOWN_AMOUNT = 10.0  # seconds
+COOLDOWN_AMOUNT = 300.0  # seconds
 
 
 intents = discord.Intents.default()
@@ -45,15 +45,43 @@ async def on_ready():
 
 @bot.event
 async def on_message(message):
+    if message.mentions:
+        whitelist_roles = [
+            1117918920276463707,
+            734974559761072169,
+            1084931529991532619,
+            1121841448363511874,
+            1024504503388622848,
+            693648003126263818,
+        ]
+        if message.author.bot:
+            return
+        for role in message.author.roles:
+            if role.id in whitelist_roles:
+                return
+        user_mentioned = message.mentions[0]
+        user_roles = user_mentioned.roles
+
+        for role in user_roles:
+            if role.id == 1121842647498227823:
+                print("found don't ping!")
+                await message.channel.send(
+                    'Please do not ping people with the "don\'t ping" role \n https://media.discordapp.net/attachments/462200562620825600/919850262959640596/dontpingplz.png',
+                    reference=message,
+                    mention_author=True,
+                )
+                break
+
     tram_list = ["tram", "trams"]
 
-    if not assert_cooldown():
-        return
-
-    if any(word in message.content.lower() for word in tram_list):
+    if any(word in message.content.lower().split() for word in tram_list):
         print("saw tram")
 
-        if message.author.bot:
+        if not assert_cooldown():
+            print("on cooldown")
+            return
+
+        if message.author.bot & assert_cooldown():
             return
         with open("src/ticketing_system/bot/tram_copypasta.md") as target:
             tram_reply = target.read()
@@ -62,13 +90,13 @@ async def on_message(message):
                 tram_reply, reference=message, mention_author=False
             )
 
-    if "risto" in message.content:
-        print("saw risto")
-        await message.channel.send(
-            "https://cdn.discordapp.com/attachments/825530277694144542/1077734017790656583/image.png",
-            reference=message,
-            mention_author=False,
-        )
+    # if "risto" in message.content & assert_cooldown():
+    #     print("saw risto")
+    #     await message.channel.send(
+    #         "https://cdn.discordapp.com/attachments/825530277694144542/1077734017790656583/image.png",
+    #         reference=message,
+    #         mention_author=False,
+    #     )
 
 
 def main():

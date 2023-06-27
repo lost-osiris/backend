@@ -9,13 +9,10 @@ router = APIRouter(prefix="/api")
 db = utils.get_db_client()
 
 
-@router.get("/issue/updateavs/{discord_id}/{avatar_id}")
-async def update_all_avatars(discord_id, avatar_id):
-    print("hello!")
-    print("discord id", discord_id)
-    print("avatar", avatar_id)
-
-    return utils.prepare_json(db.issues.find({"playerData.name": "Croissant"}))
+@router.get("/issue/updatefields")
+async def update_id_fields():
+    update_fields = db.issues.find({"playerData.id": {"$exists": True}}, {"modlogs": 0})
+    return utils.prepare_json(update_fields)
 
 
 @router.get("/issue/{issue_id}")
@@ -45,13 +42,13 @@ async def update_issue(issue_id, request: Request):
 
     issue_info = req_info["issue"]
     issue_info["category"] = issue_info["category"].lower()
-    user_info = req_info["userInfo"]
+    user_info = req_info["userInfo"]["data"]
 
     issue_info = {k: v for k, v in issue_info.items() if k != "playerData"}
-    user_info = {k: user_info[k] for k in ["id", "avatar", "username"]}
+    user_info = {k: user_info[k] for k in ["discord_id", "avatar", "username"]}
 
     issue_id = ObjectId(issue_id)
-    issue_info.pop("_id")
+    issue_info.pop("id")
 
     issue = db.issues.find_one_and_update(
         {"_id": issue_id}, {"$set": issue_info}, upsert=False
@@ -90,7 +87,7 @@ async def create_issue(request: Request):
 @router.delete("/issue/{issue_id}")
 async def delete_issue(issue_id, request: Request):
     req_info = await request.json()
-    user_info = {k: req_info[k] for k in ["id", "avatar", "username"]}
+    user_info = {k: req_info[k] for k in ["discord_id", "avatar", "username"]}
 
     issue = db.issues.find_one({"_id": ObjectId(issue_id)})
     db.issues.find_one_and_delete({"_id": ObjectId(issue_id)})

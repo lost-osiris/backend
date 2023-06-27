@@ -20,7 +20,7 @@ def create_embed(message, color, title):
 
 def send_new_issue(issue):
     description = f"[click here to see issue in website](https://modforge.gg/issue/{issue['_id']})"
-    discord_id = issue["playerData"]["id"]
+    discord_id = issue["playerData"]["discord_id"]
     discord_name = issue["playerData"]["name"]
     discord_avatar_id = issue["playerData"]["avatar"]
     category = issue["category"]
@@ -53,7 +53,7 @@ def send_update_issue(diff, issue, user_info):
     description = f"[{issue['summary']}](https://modforge.gg/issue/{issue['_id']})"
     ignored_update_list = []
     message_list = []
-    discord_id = user_info["id"]
+    discord_id = user_info["discord_id"]
     discord_name = user_info["username"]
     author_name = issue["playerData"]["name"]
     discord_avatar_id = user_info["avatar"]
@@ -126,7 +126,7 @@ def send_update_issue(diff, issue, user_info):
 
 
 def send_deleted_issue(issue, user_info):
-    discord_id = user_info["id"]
+    discord_id = user_info["discord_id"]
     discord_name = user_info["username"]
     author_name = issue["playerData"]["name"]
     discord_avatar_id = user_info["avatar"]
