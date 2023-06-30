@@ -1,8 +1,8 @@
 import os
 import pymongo
+import re
 from bson import ObjectId
 from urllib.parse import quote_plus
-import re
 from pymongo.cursor import Cursor
 
 

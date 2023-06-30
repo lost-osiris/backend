@@ -1,11 +1,13 @@
 from fastapi import APIRouter, Request, HTTPException
 from bson import ObjectId
 from .. import utils
+from .. import auth
 from .. import webhooks
 import os
 import requests
 import traceback
 import time
+from datetime import timedelta
 
 SECRET = os.getenv("CLIENT_SECRET")
 APP_ID = os.getenv("APPLICATION_ID")
@@ -41,6 +43,12 @@ async def get_code_run_exchange(code):
     )
 
     user = create_or_get_user(r.json())
+
+    access_token_expires = timedelta(minutes=auth.ACCESS_TOKEN_EXPIRE_MINUTES)
+    access_token = auth.create_access_token(
+        data={"sub": user["id"]}, expires_delta=access_token_expires
+    )
+    user["token"] = {"access_token": access_token, "token_type": "bearer"}
     user["projects"] = get_user_project_roles(user["discord_id"])
     return user
 
@@ -91,7 +99,7 @@ def create_or_get_user(discord_user):
 
 
 @router.put("/user/addtoproject")
-async def add_user_to_project(request: Request):
+async def add_user_to_project(user: auth.UserDep, request: Request):
     req_info = await request.json()
     print(req_info)
 
@@ -113,7 +121,7 @@ async def add_user_to_project(request: Request):
 
 
 @router.get("/user/{discord_id}")
-async def get_user(discord_id):
+async def get_user(user: auth.UserDep, discord_id):
     user = utils.prepare_json(db.users.find_one({"discord_id": discord_id}))
     if user:
         user["projects"] = get_user_project_roles(user["discord_id"])
