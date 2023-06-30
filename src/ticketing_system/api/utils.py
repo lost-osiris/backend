@@ -4,6 +4,7 @@ import re
 from bson import ObjectId
 from urllib.parse import quote_plus
 from pymongo.cursor import Cursor
+from pymongo.command_cursor import CommandCursor
 
 
 def to_title_case(string):
@@ -29,7 +30,7 @@ def _json_ready(data):
 
 
 def prepare_json(data):
-    if isinstance(data, Cursor):
+    if isinstance(data, Cursor) or isinstance(data, CommandCursor):
         return prepare_json(list(data))
 
     if isinstance(data, dict):
