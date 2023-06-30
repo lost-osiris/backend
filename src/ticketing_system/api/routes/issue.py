@@ -9,10 +9,6 @@ router = APIRouter(prefix="/api")
 db = utils.get_db_client()
 
 
-@router.get("/issue/updatefields")
-async def update_id_fields():
-    update_fields = db.issues.find({"playerData.id": {"$exists": True}}, {"modlogs": 0})
-    return utils.prepare_json(update_fields)
 
 
 @router.get("/issue/{issue_id}")

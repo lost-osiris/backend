@@ -1,12 +1,9 @@
 import os
 import pymongo
-from dotenv import load_dotenv
 from bson import ObjectId
 from urllib.parse import quote_plus
 import re
 from pymongo.cursor import Cursor
-
-load_dotenv()
 
 
 def to_title_case(string):
@@ -67,8 +64,8 @@ def prepare_json(data):
 
 
 def get_db_client(db="test"):
-    USERNAME = quote_plus(os.getenv("USERNAME"))
-    PASSWORD = quote_plus(os.getenv("PASSWORD"))
+    USERNAME = quote_plus(os.getenv("DB_USERNAME"))
+    PASSWORD = quote_plus(os.getenv("DB_PASSWORD"))
     URI = f"mongodb+srv://{USERNAME}:{PASSWORD}@cluster0.81uebtg.mongodb.net/?retryWrites=true&w=majority"
 
     return pymongo.MongoClient(URI)[db]
