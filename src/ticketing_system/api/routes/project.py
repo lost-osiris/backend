@@ -159,6 +159,7 @@ async def join_waitlist(project_id: str, request: Request):
                 {"_id": ObjectId(project_id)},
                 {"$push": {"waitlist": insert_info}},
             )
+            webhooks.send_join_waitlist(req_info)
             return req_info
 
 
@@ -223,6 +224,7 @@ async def update_waitlist(project_id: str, request: Request):
             },
             {"$pull": {"waitlist": {"discord_id": req_info["discord_id"]}}},
         )
+        webhooks.send_accept_waitlist(req_info)
         return req_info
 
 
@@ -242,3 +244,30 @@ async def create_categories(request: Request, project_id: str):
             status_code=503,
             detail=f"Unable write to database",
         )
+
+
+### DELETE ###
+
+
+@router.delete("project/{project_id}/members/deletefromwaitlist", status_code=204)
+async def update_waitlist(project_id: str, request: Request):
+    req_info = await request.json()
+    find_member = db.projects.find(
+        {"_id": ObjectId(project_id)},
+        {"_id": 0, "members": {"$elemMatch": {"discord_id": req_info["discord_id"]}}},
+    )
+
+    if not find_member:
+        raise HTTPException(
+            status_code=503,
+            detail=f"Could not find user on waitlist",
+        )
+
+    elif find_member:
+        db.projects.update_one(
+            {
+                "_id": ObjectId(project_id),
+            },
+            {"$pull": {"waitlist": {"discord_id": req_info["discord_id"]}}},
+        )
+        webhooks.send_reject_waitlist(req_info)

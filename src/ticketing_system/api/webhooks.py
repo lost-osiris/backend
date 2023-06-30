@@ -10,7 +10,7 @@ load_dotenv()
 IGNORED_UPDATE_EVENT_KEYS = ["modlogs", "description", "attachments"]
 # webhook = discord.SyncWebhook.from_url(os.getenv("WEBHOOK_URL"))
 webhook = discord.SyncWebhook.from_url(
-    "https://discordapp.com/api/webhooks/1075674946715525120/uHhuAUGWxX3-QfipUTapVmmHK0Ch9L31r0zkpqB7zj8xhTvH5y2kuAb7XZUtxmlEtg-3"
+    "https://discordapp.com/api/webhooks/1075674946715525120/uHhuAUGWxX3-QfipUTapVmmHK0Ch9L31r0zkpqB7zj8xhTvH5y2kuAb7XZUtxmlEtg-3",
 )
 
 
@@ -144,6 +144,57 @@ def send_deleted_issue(issue, user_info):
     embed.add_field(name="Type", value=issue["type"], inline=False)
     embed.add_field(name="Category", value=category, inline=True)
     embed.add_field(name="Version", value=issue["version"], inline=True)
+
+    embed.set_author(
+        name=discord_name,
+        icon_url=f"https://cdn.discordapp.com/avatars/{discord_id}/{discord_avatar_id}.png",
+    )
+    webhook.send(embed=embed)
+
+
+def send_join_waitlist(user_info):
+    color = Color.blurple()
+    discord_id = user_info["discord_id"]
+    discord_name = user_info["username"]
+    discord_avatar_id = user_info["avatar"]
+
+    embed = discord.Embed(
+        color=color, title=f"{discord_name} has requested to join Pale Court"
+    )
+
+    embed.set_author(
+        name=discord_name,
+        icon_url=f"https://cdn.discordapp.com/avatars/{discord_id}/{discord_avatar_id}.png",
+    )
+    webhook.send(embed=embed)
+
+
+def send_accept_waitlist(user_info):
+    color = Color.green()
+    discord_id = user_info["discord_id"]
+    discord_name = user_info["username"]
+    discord_avatar_id = user_info["avatar"]
+
+    embed = discord.Embed(
+        color=color, title=f"{discord_name} has been accepted into Pale Court"
+    )
+
+    embed.set_author(
+        name=discord_name,
+        icon_url=f"https://cdn.discordapp.com/avatars/{discord_id}/{discord_avatar_id}.png",
+    )
+    webhook.send(embed=embed)
+
+
+def send_reject_waitlist(user_info):
+    color = Color.red()
+    discord_id = user_info["discord_id"]
+    discord_name = user_info["username"]
+    discord_avatar_id = user_info["avatar"]
+
+    embed = discord.Embed(
+        color=color, title=f"{discord_name} was rejected from joining Pale Court"
+    )
 
     embed.set_author(
         name=discord_name,
