@@ -38,7 +38,7 @@ async def create_project(request: Request):
         raise HTTPException(status_code=503, detail="Unable write issue to database")
 
 
-@router.get("/projects/")
+@router.get("/projects")
 async def get_all_projects():
     projects = list(db.projects.find())
     return utils.prepare_json(projects)
@@ -90,18 +90,18 @@ async def create_project_webhook(request: Request):
         )
 
 
-@router.get("/project/{project_name}/waitlist")
-async def get_waitlist(project_name):
+@router.get("/project/{project_id}/waitlist")
+async def get_waitlist(project_id):
     return utils.prepare_json(
-        db.projects.find_one({"name": project_name}, {"waitlist": 1, "_id": 0})
+        db.projects.find_one({"_id": ObjectId(project_id)}, {"waitlist": 1, "_id": 0})
     )
 
 
-@router.post("/project/{project_name}/members/joinwaitlist")
-async def join_waitlist(project_name: str, request: Request):
+@router.post("/project/{project_id}/members/joinwaitlist")
+async def join_waitlist(project_id: str, request: Request):
     req_info = await request.json()
     find_member = db.projects.find(
-        {"name": project_name},
+        {"_id": ObjectId(project_id)},
         {"_id": 0, "members": {"$elemMatch": {"discord_id": req_info["discord_id"]}}},
     )
 
@@ -113,7 +113,7 @@ async def join_waitlist(project_name: str, request: Request):
 
     elif not find_member[0]:
         find_waitlist = db.projects.find(
-            {"name": project_name},
+            {"_id": ObjectId(project_id)},
             {
                 "_id": 0,
                 "waitlist": {"$elemMatch": {"discord_id": req_info["discord_id"]}},
@@ -130,17 +130,17 @@ async def join_waitlist(project_name: str, request: Request):
                 "name": req_info["name"],
             }
             db.projects.update_one(
-                {"name": project_name},
+                {"_id": ObjectId(project_id)},
                 {"$push": {"waitlist": insert_info}},
             )
             return req_info
 
 
-@router.put("/project/{project_name}/members/updatewaitlist")
-async def update_waitlist(project_name: str, request: Request):
+@router.put("/project/{project_id}/members/updatewaitlist")
+async def update_waitlist(project_id: str, request: Request):
     req_info = await request.json()
     find_member = db.projects.find(
-        {"name": project_name},
+        {"_id": ObjectId(project_id)},
         {"_id": 0, "members": {"$elemMatch": {"discord_id": req_info["discord_id"]}}},
     )
 
@@ -153,22 +153,22 @@ async def update_waitlist(project_name: str, request: Request):
     elif not find_member[0]:
         insert_info = {"discord_id": req_info["discord_id"], "role": req_info["role"]}
         db.projects.update_one(
-            {"name": project_name},
+            {"_id": ObjectId(project_id)},
             {"$push": {"members": insert_info}},
         )
         db.projects.update_one(
             {
-                "name": project_name,
+                "_id": ObjectId(project_id),
             },
             {"$pull": {"waitlist": {"discord_id": req_info["discord_id"]}}},
         )
         return req_info
 
 
-@router.get("/project/{project_name}/member/{discord_id}", status_code=204)
-async def find_member(project_name: str, discord_id: str):
+@router.get("/project/{project_id}/member/{discord_id}", status_code=204)
+async def find_member(project_id: str, discord_id: str):
     find_member = db.projects.find(
-        {"name": project_name},
+        {"_id": ObjectId(project_id)},
         {"_id": 0, "members": {"$elemMatch": {"discord_id": discord_id}}},
     )
 
@@ -182,9 +182,9 @@ async def find_member(project_name: str, discord_id: str):
         )
 
 
-@router.get("/project/{name}/categories")
-async def create_categories(name: str):
-    project = db.projects.find_one({"name": name})
+@router.get("/project/{project_id}/categories")
+async def create_categories(project_id: str):
+    project = db.projects.find_one({"_id": ObjectId(project_id)})
 
     if not project:
         raise HTTPException(
@@ -195,15 +195,15 @@ async def create_categories(name: str):
     return utils.prepare_json(project["categories"])
 
 
-@router.put("/project/{name}/categories")
-async def create_categories(request: Request, name: str):
+@router.put("/project/{project_id}}/categories")
+async def create_categories(request: Request, project_id: str):
     req_info = await request.json()
 
-    project = db.project.find({"name": name})
+    project = db.project.find({"_id": ObjectId(project_id)})
     if project:
         for category in req_info:
             db.projects.update_one(
-                {"name": name},
+                {"_id": ObjectId(project_id)},
                 {"$push": {"categories": category.strip()}},
             )
     else:
@@ -218,11 +218,15 @@ async def create_categories(request: Request, name: str):
 #     return utils.prepare_json(db.projects.find({"name": name}))
 
 
-@router.get("/project/{project_name}/category/{category}/issues")
-async def get_all_by_category(project_name: str, category: str):
-    # issues = list(db.issues.find({"project_name": project_name, "category": category}))
+@router.get("/project/{project_id}/category/{category}/issues")
+async def get_all_by_category(project_id: str, category: str):
+    # issues = list(db.issues.find({"project_id": project_id, "category": category}))
     issues = db.issues.find(
-        {"category": urllib.parse.unquote(category)}, {"modlogs": 0}
+        {
+            "category": urllib.parse.unquote(category),
+            "project_id": ObjectId(project_id),
+        },
+        {"modlogs": 0},
     )
     return utils.prepare_json(issues)
 

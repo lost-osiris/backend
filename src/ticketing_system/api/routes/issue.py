@@ -9,11 +9,17 @@ router = APIRouter(prefix="/api")
 db = utils.get_db_client()
 
 
-
-
 @router.get("/issue/{issue_id}")
 async def get_one(issue_id):
-    return utils.prepare_json(db.issues.find_one({"_id": ObjectId(issue_id)}))
+    issue = utils.prepare_json(db.issues.find_one({"_id": ObjectId(issue_id)}))
+    if issue:
+        avatar_id = db.users.find_one(
+            {"discord_id": issue["playerData"]["discord_id"]}, {"avatar": 1}
+        )
+        if avatar_id:
+            issue["playerData"]["avatar"] = avatar_id["avatar"]
+
+    return issue
 
 
 @router.get("/issue/{issue_id}/modlogs")

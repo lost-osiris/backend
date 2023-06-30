@@ -20,3 +20,14 @@ async def update_all_issues_to_include_project():
         {}, {"$set": {"project_id": ObjectId("63fe47296edfc3b387628861")}}
     )
     return "done"
+
+
+@router.get("/update/issue/idtodiscordid")
+async def update_all_issues_to_discord_id():
+    db.issues.updateMany({}, {"$rename": {"playerData.id": "playerData.discord_id"}})
+
+
+@router.get("/update/issue/updateissueavatars")
+async def update_all_issue_avatars():
+    ...
+    # db.
