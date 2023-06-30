@@ -213,14 +213,9 @@ async def create_categories(request: Request, project_id: str):
         )
 
 
-# @router.get("/project/{name}/issues")
-# async def get_exact(name: str):
-#     return utils.prepare_json(db.projects.find({"name": name}))
-
-
 @router.get("/project/{project_id}/category/{category}/issues")
 async def get_all_by_category(project_id: str, category: str):
-    # issues = list(db.issues.find({"project_id": project_id, "category": category}))
+    # issues = list(db.issues.find({"project_name": project_name, "category": category}))
     issues = db.issues.find(
         {
             "category": urllib.parse.unquote(category),
@@ -229,9 +224,3 @@ async def get_all_by_category(project_id: str, category: str):
         {"modlogs": 0},
     )
     return utils.prepare_json(issues)
-
-
-# @router.get("/category/{category}/issues")
-# async def get_all_by_category(category: str):
-#     issues = list(db.issues.find({"category": category}))
-#     return utils.prepare_json(issues)

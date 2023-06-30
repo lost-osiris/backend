@@ -31,3 +31,8 @@ async def update_all_issues_to_discord_id():
 async def update_all_issue_avatars():
     ...
     # db.
+
+
+@router.get("/update/addblacklistfield")
+async def update_all_users_to_include_ban_field():
+    db.users.update_many({}, {"$set": {"Banned": False}})
