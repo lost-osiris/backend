@@ -106,6 +106,18 @@ async def delete_issue(user: auth.UserDep, issue_id, request: Request):
     user_info = {k: req_info[k] for k in ["discord_id", "avatar", "username"]}
 
     issue = db.issues.find_one({"_id": ObjectId(issue_id)})
+    project_roles = get_user_project_roles(
+        user["discord_id"], project_id=issue["project_id"]
+    )
+
+    has_contributor = [i for i in project_roles if "contributor" in i["roles"]]
+
+    if user["discord_id"] != issue["playerData"]["id"] or not has_contributor:
+        raise HTTPException(
+            status_code=403,
+            detail="User does not have permissions to perform update on issue.",
+        )
+
     db.issues.find_one_and_delete({"_id": ObjectId(issue_id)})
 
     webhooks.send_deleted_issue(issue, user_info)
