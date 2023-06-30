@@ -9,6 +9,9 @@ router = APIRouter(prefix="/api")
 db = utils.get_db_client()
 
 
+### GET ###
+
+
 @router.get("/issue/{issue_id}")
 async def get_one(issue_id):
     issue = utils.prepare_json(db.issues.find_one({"_id": ObjectId(issue_id)}))
@@ -29,6 +32,26 @@ async def get_one(issue_id):
     )
 
 
+### POST ###
+
+
+@router.post("/issue")
+async def create_issue(request: Request):
+    req_info = await request.json()
+    req_info["category"] = req_info["category"].lower()
+
+    # TODO: check to see if user_id is allowed to create this issue on the project_name
+
+    try:
+        issue = db.issues.insert_one(req_info)
+    except:
+        print(traceback.format_exc())
+        raise HTTPException(status_code=503, detail="Unable write issue to database")
+
+    webhooks.send_new_issue(req_info)
+    return utils.prepare_json(issue.inserted_id)
+
+
 @router.post("/issue/findexact")
 async def get_exact(request: Request):
     req_info = await request.json()
@@ -36,6 +59,9 @@ async def get_exact(request: Request):
         del req_info["_id"]
 
     return utils.prepare_json(db.issues.find_one(req_info))
+
+
+### PUT ###
 
 
 @router.put("/issue/{issue_id}")
@@ -69,21 +95,7 @@ async def update_issue(issue_id, request: Request):
     return utils.prepare_json(issue)
 
 
-@router.post("/issue")
-async def create_issue(request: Request):
-    req_info = await request.json()
-    req_info["category"] = req_info["category"].lower()
-
-    # TODO: check to see if user_id is allowed to create this issue on the project_name
-
-    try:
-        issue = db.issues.insert_one(req_info)
-    except:
-        print(traceback.format_exc())
-        raise HTTPException(status_code=503, detail="Unable write issue to database")
-
-    webhooks.send_new_issue(req_info)
-    return utils.prepare_json(issue.inserted_id)
+### DELETE ###
 
 
 @router.delete("/issue/{issue_id}")
