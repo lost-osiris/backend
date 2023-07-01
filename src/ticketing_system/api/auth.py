@@ -1,12 +1,15 @@
 import os
-import time
+import os
+import requests
+import urllib
+import datetime
 from typing import Annotated, Union
-from datetime import datetime, timedelta
 from fastapi import Request, HTTPException, status, Depends, Header
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
+from fastapi.responses import RedirectResponse
 from jose import JWTError, jwt
+from fastapi import APIRouter, Request, HTTPException
 from . import utils
-import os
 
 from fastapi.security import (
     OAuth2AuthorizationCodeBearer,
@@ -17,13 +20,18 @@ from bson import ObjectId
 from datetime import datetime, timedelta
 from jose import JWTError, jwt
 from .models.token import TokenData
-from .models.user import User
+from .models import user as user_models
 
 SECRET_KEY = os.getenv("CLIENT_SECRET")
+APP_ID = os.getenv("APPLICATION_ID")
+
+PROD_AUTH_REDIRECT = "https://modforge.gg/"
 ALGORITHM = "HS256"
 ACCESS_TOKEN_EXPIRE_MINUTES = 30
 
 oauth2_scheme = HTTPBearer()
+
+router = APIRouter(prefix="/api")
 
 
 class JWTBearer(HTTPBearer):
@@ -61,13 +69,12 @@ class JWTBearer(HTTPBearer):
         return isTokenValid
 
 
-def create_access_token(data: dict, expires_delta: Union[timedelta, None] = None):
+def create_access_token(data: dict):
     to_encode = data.copy()
-    if expires_delta:
-        expire = datetime.utcnow() + expires_delta
-    else:
-        expire = datetime.utcnow() + timedelta(minutes=15)
-    to_encode.update({"exp": expire})
+
+    expire = datetime.utcnow() + timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
+
+    to_encode.update({"expires": expire.isoformat()})
     encoded_jwt = jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
     return encoded_jwt
 
@@ -86,7 +93,12 @@ async def get_current_user(token: Annotated[str, Depends(JWTBearer())]):
         user_id: str = payload.get("sub")
         if user_id is None:
             raise credentials_exception
-        token_data = TokenData(user_id=user_id)
+        token_data = TokenData(
+            user_id=user_id,
+            discord_access_token=payload.get("discord_access_token"),
+            user=payload.get("user"),
+            discord=payload.get("dicord"),
+        )
     except JWTError:
         raise credentials_exception
 
@@ -99,6 +111,56 @@ async def get_current_user(token: Annotated[str, Depends(JWTBearer())]):
         raise HTTPException(status_code=400, detail="Banned user")
 
     return utils.prepare_json(user)
+
+
+@router.get("/auth/discord")
+async def get_code_run_exchange(code: str, redirect_uri: str):
+    redirect_url = urllib.parse.unquote(redirect_uri)
+
+    data = {
+        "client_id": APP_ID,
+        "client_secret": SECRET_KEY,
+        "grant_type": "authorization_code",
+        "code": code,
+        "redirect_uri": "http://localhost:3000/api/auth/discord?redirect_uri=http://localhost:3000"
+        if os.getenv("IS_DEV")
+        else PROD_AUTH_REDIRECT,
+    }
+
+    headers = {"Content-Type": "application/x-www-form-urlencoded"}
+    r = requests.post(
+        "https://discord.com/api/v8/oauth2/token",
+        data=data,
+        headers=headers,
+    )
+    r.raise_for_status()
+    response_data = r.json()
+
+    r = requests.get(
+        "https://discord.com/api/v8/users/@me",
+        headers={"Authorization": f"Bearer {response_data['access_token']}"},
+    )
+
+    user = user_models.create_or_get_user(r.json())
+
+    access_token = create_access_token(
+        data={
+            "discord_access_token": response_data["access_token"],
+            "discord": r.json(),
+            "user": user,
+            "sub": user["id"],
+        }
+    )
+
+    return RedirectResponse(
+        f"{redirect_url}?token={access_token}",
+        status_code=303,
+    )
+
+
+@router.post("/auth/token/refresh")
+async def token_refresh():
+    ...
 
 
 UserDep = Annotated[str, Depends(get_current_user)]

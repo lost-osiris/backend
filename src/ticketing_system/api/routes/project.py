@@ -255,53 +255,57 @@ async def create_categories(user: auth.UserDep, request: Request, project_id: st
 
 @router.get("/project/{project_id}/category/{category}/issues")
 async def get_all_by_category(user: auth.UserDep, project_id: str, category: str):
-    issues = db.issues.aggregate(
-        [
-            {
-                "$match": {
-                    "project_id": ObjectId(project_id),
-                    "category": category,
-                }
-            },
-            {
-                "$project": {
-                    "priority": 1,
-                    "status": 1,
-                    "category": 1,
-                    "playerData": 1,
-                    "version": 1,
-                    "archive": 1,
-                    "project_id": 1,
-                    "type": 1,
-                    "summary": 1,
-                    "description": 1,
-                    "_id": 1,
-                    "weight": {
-                        "$cond": [
-                            {"$eq": ["$priority", "high"]},
-                            1,
-                            {
-                                "$cond": [{"$eq": ["$priority", "medium"]}, 2, 3],
-                            },
-                        ]
-                    },
-                }
-            },
-            {"$sort": {"weight": 1}},
-        ]
+    issues = utils.prepare_json(
+        db.issues.aggregate(
+            [
+                {
+                    "$match": {
+                        "project_id": ObjectId(project_id),
+                        "category": category,
+                    }
+                },
+                {
+                    "$project": {
+                        "priority": 1,
+                        "status": 1,
+                        "category": 1,
+                        "discord_id": 1,
+                        "version": 1,
+                        "archive": 1,
+                        "project_id": 1,
+                        "type": 1,
+                        "summary": 1,
+                        "description": 1,
+                        "_id": 1,
+                        "weight": {
+                            "$cond": [
+                                {"$eq": ["$priority", "high"]},
+                                1,
+                                {
+                                    "$cond": [{"$eq": ["$priority", "medium"]}, 2, 3],
+                                },
+                            ]
+                        },
+                    }
+                },
+                {"$sort": {"weight": 1}},
+            ]
+        )
     )
+    discord_ids = [i["discord_id"] for i in issues]
 
-    if not find_member:
-        raise HTTPException(
-            status_code=503,
-            detail=f"Could not find user on waitlist",
-        )
+    users = {
+        i["discord_id"]: i
+        for i in utils.prepare_json(db.users.find({"discord_id": {"$in": discord_ids}}))
+    }
 
-    elif find_member:
-        db.projects.update_one(
-            {
-                "_id": ObjectId(project_id),
-            },
-            {"$pull": {"waitlist": {"discord_id": req_info["discord_id"]}}},
-        )
-        webhooks.send_reject_waitlist(req_info)
+    merged_issues = []
+    for issue in issues:
+        if issue["discord_id"] in users:
+            issue["playerData"] = users[issue["discord_id"]]
+        else:
+            issue["playerData"] = {}
+
+        merged_issues.append(issue)
+
+    return utils.prepare_json(merged_issues)

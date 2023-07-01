@@ -6,11 +6,13 @@ from dotenv import load_dotenv
 load_dotenv()
 
 from .routes import issue, project, user, db_updates
+from . import auth
 
 app = FastAPI()
 
 app.add_middleware(GZipMiddleware, minimum_size=1000)
 
+app.include_router(auth.router)
 app.include_router(issue.router)
 app.include_router(project.router)
 app.include_router(user.router)

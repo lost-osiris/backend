@@ -5,7 +5,7 @@ from .. import webhooks
 import traceback
 from typing import Annotated
 from .. import auth
-from .user import get_user_project_roles
+from ..models import user as user_models
 
 router = APIRouter(prefix="/api")
 db = utils.get_db_client()
@@ -71,7 +71,7 @@ async def update_issue(user: auth.UserDep, issue_id, request: Request):
     req_info = await request.json()
     issue_id = ObjectId(issue_id)
     issue = utils.prepare_json(db.issues.find_one({"_id": issue_id}))
-    project_roles = get_user_project_roles(
+    project_roles = user_models.get_user_project_roles(
         user["discord_id"], project_id=issue["project_id"]
     )
 
@@ -115,7 +115,7 @@ async def delete_issue(user: auth.UserDep, issue_id, request: Request):
     user_info = {k: req_info[k] for k in ["discord_id", "avatar", "username"]}
 
     issue = db.issues.find_one({"_id": ObjectId(issue_id)})
-    project_roles = get_user_project_roles(
+    project_roles = user_models.get_user_project_roles(
         user["discord_id"], project_id=issue["project_id"]
     )
 
