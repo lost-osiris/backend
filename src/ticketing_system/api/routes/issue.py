@@ -113,11 +113,8 @@ async def update_issue(user: auth.UserDep, issue_id, request: Request):
 
 
 @router.delete("/issue/{issue_id}")
-async def delete_issue(user_auth: auth.UserDep, issue_id, request: Request):
+async def delete_issue(user_auth: auth.UserDep, issue_id):
     user = user_auth["token"].user
-
-    req_info = await request.json()
-    user_info = {k: req_info[k] for k in ["discord_id", "avatar", "username"]}
 
     issue = db.issues.find_one({"_id": ObjectId(issue_id)})
     issue["playerData"] = utils.prepare_json(
@@ -134,4 +131,4 @@ async def delete_issue(user_auth: auth.UserDep, issue_id, request: Request):
 
     db.issues.find_one_and_delete({"_id": ObjectId(issue_id)})
 
-    webhooks.send_deleted_issue(issue, user_info)
+    webhooks.send_deleted_issue(issue, user)
