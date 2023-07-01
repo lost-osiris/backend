@@ -98,11 +98,15 @@ async def get_waitlist(project_id):
 
 
 @router.post("/project/{project_id}/members/joinwaitlist")
-async def join_waitlist(project_id: str, request: Request):
+async def join_waitlist(user_auth: auth.UserDep, project_id: str, request: Request):
     req_info = await request.json()
+    user = user_auth["token"].user
     find_member = db.projects.find(
         {"_id": ObjectId(project_id)},
-        {"_id": 0, "members": {"$elemMatch": {"discord_id": req_info["discord_id"]}}},
+        {
+            "_id": 0,
+            "members": {"$elemMatch": {"discord_id": user["discord_id"]}},
+        },
     )
 
     if find_member[0]:
@@ -116,7 +120,7 @@ async def join_waitlist(project_id: str, request: Request):
             {"_id": ObjectId(project_id)},
             {
                 "_id": 0,
-                "waitlist": {"$elemMatch": {"discord_id": req_info["discord_id"]}},
+                "waitlist": {"$elemMatch": {"discord_id": user["discord_id"]}},
             },
         )
         if find_waitlist[0]:
@@ -126,15 +130,15 @@ async def join_waitlist(project_id: str, request: Request):
             )
         else:
             insert_info = {
-                "discord_id": req_info["discord_id"],
-                "username": req_info["username"],
-                "avatar": req_info["avatar"],
+                "discord_id": user["discord_id"],
+                "username": user["username"],
+                "avatar": user["avatar"],
             }
             db.projects.update_one(
                 {"_id": ObjectId(project_id)},
                 {"$push": {"waitlist": insert_info}},
             )
-            webhooks.send_join_waitlist(req_info)
+            webhooks.send_join_waitlist(user)
             return req_info
 
 
@@ -142,7 +146,7 @@ async def join_waitlist(project_id: str, request: Request):
 
 
 @router.put("/project/webhooks")
-async def create_project_webhook(request: Request):
+async def create_project_webhook(user: auth.UserDep, request: Request):
     req_info = await request.json()
     proj_name = req_info["project_name"]
     time.sleep(0.5)
@@ -174,7 +178,7 @@ async def create_project_webhook(request: Request):
 
 
 @router.put("/project/{project_id}/members/updatewaitlist")
-async def update_waitlist(project_id: str, request: Request):
+async def update_waitlist(user: auth.UserDep, project_id: str, request: Request):
     req_info = await request.json()
 
     get_user_info = utils.prepare_json(
