@@ -27,7 +27,7 @@ APP_ID = os.getenv("APPLICATION_ID")
 
 PROD_AUTH_REDIRECT = "https://modforge.gg/"
 ALGORITHM = "HS256"
-ACCESS_TOKEN_EXPIRE_MINUTES = 30
+ACCESS_TOKEN_EXPIRE_MINUTES = 720
 
 oauth2_scheme = HTTPBearer()
 
@@ -74,7 +74,7 @@ def create_access_token(data: dict):
 
     expire = datetime.utcnow() + timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
 
-    to_encode.update({"expires": expire.isoformat()})
+    to_encode.update({"exp": expire})
     encoded_jwt = jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
     return encoded_jwt
 
