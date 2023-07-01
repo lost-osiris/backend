@@ -1,10 +1,16 @@
 import os
 import pymongo
-from dotenv import load_dotenv
+import re
 from bson import ObjectId
 from urllib.parse import quote_plus
+from pymongo.cursor import Cursor
+from pymongo.command_cursor import CommandCursor
 
-load_dotenv()
+
+def to_title_case(string):
+    string = string.replace("-", " ")
+    string = re.sub(r"\w\S*", lambda txt: txt.group(0).capitalize(), string)
+    return string
 
 
 def alphanumeric_check(data):
@@ -24,17 +30,20 @@ def _json_ready(data):
 
 
 def prepare_json(data):
+    if isinstance(data, Cursor) or isinstance(data, CommandCursor):
+        return prepare_json(list(data))
+
     if isinstance(data, dict):
         output = {}
-        for key, value in data.items():
-            if (
-                isinstance(value, dict)
-                or isinstance(value, list)
-                or isinstance(value, set)
-            ):
-                output[key] = prepare_json(value)
+        for k, v in data.items():
+            key = k
+            if k == "_id":
+                key = "id"
+
+            if isinstance(v, dict) or isinstance(v, list) or isinstance(v, set):
+                output[key] = prepare_json(v)
             else:
-                output[key] = _json_ready(value)
+                output[key] = _json_ready(v)
 
         return output
 
@@ -56,8 +65,8 @@ def prepare_json(data):
 
 
 def get_db_client(db="test"):
-    USERNAME = quote_plus(os.getenv("USERNAME"))
-    PASSWORD = quote_plus(os.getenv("PASSWORD"))
+    USERNAME = quote_plus(os.getenv("DB_USERNAME"))
+    PASSWORD = quote_plus(os.getenv("DB_PASSWORD"))
     URI = f"mongodb+srv://{USERNAME}:{PASSWORD}@cluster0.81uebtg.mongodb.net/?retryWrites=true&w=majority"
 
     return pymongo.MongoClient(URI)[db]
