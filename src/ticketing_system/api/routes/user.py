@@ -17,6 +17,16 @@ router = APIRouter(prefix="/api")
 db = utils.get_db_client()
 
 
+@router.get("/user/{discord_id}")
+async def get_user(discord_id):
+    user = utils.prepare_json(db.users.find_one({"discord_id": discord_id}))
+    if user:
+        user["projects"] = get_user_project_roles(user["discord_id"])
+        return user
+
+    raise HTTPException(status_code=404, detail="User not found")
+
+
 @router.post("/user/discord/{code}")
 async def get_code_run_exchange(code):
     data = {
@@ -57,10 +67,10 @@ def create_or_get_user(discord_user):
     user_info = {
         "discord_id": discord_user["id"],
         "username": discord_user["username"],
-        # "discriminator": discord_user["discriminator"],
         "avatar": discord_user["avatar"],
         "banner": discord_user["banner"],
         "banner_color": discord_user["banner_color"],
+        "banned": False,
         "projects": [],
     }
     find_user = db.users.find_one({"discord_id": user_info["discord_id"]})
@@ -85,7 +95,6 @@ def create_or_get_user(discord_user):
                             "discord_id": user_info["discord_id"],
                             "username": user_info["username"],
                             "avatar": user_info["avatar"],
-                            # "discriminator": discord_user["discriminator"],
                             "banner": user_info["banner"],
                             "banner_color": user_info["banner_color"],
                         }

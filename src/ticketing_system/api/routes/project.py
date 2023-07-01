@@ -133,7 +133,43 @@ async def join_waitlist(user: auth.UserDep, project_id: str, request: Request):
                 {"_id": ObjectId(project_id)},
                 {"$push": {"waitlist": insert_info}},
             )
+            webhooks.send_join_waitlist(req_info)
             return req_info
+
+
+### PUT ###
+
+
+@router.put("/project/webhooks")
+async def create_project_webhook(request: Request):
+    req_info = await request.json()
+    proj_name = req_info["project_name"]
+    time.sleep(0.5)
+
+    find_project = db.projects.find_one({"name": proj_name})
+
+    if find_project and db.webhooks.find_one({"url": req_info}):
+        raise HTTPException(status_code=403, detail="webhook already exists")
+    elif find_project and not db.webhooks.find_one({"url": req_info}):
+        try:
+            new_webhook = db.webhooks.insert_one(req_info)
+        except:
+            print(traceback.format_exc())
+            raise HTTPException(
+                status_code=503, detail="Unable write issue to database"
+            )
+
+    elif not find_project:
+        raise HTTPException(
+            status_code=404,
+            detail=f"Project not found, cannot write to database",
+        )
+
+    else:
+        raise HTTPException(
+            status_code=503,
+            detail=f"Unable write webhook for channel to database",
+        )
 
 
 @router.put("/project/{project_id}/members/updatewaitlist")
@@ -162,6 +198,7 @@ async def update_waitlist(user: auth.UserDep, project_id: str, request: Request)
             },
             {"$pull": {"waitlist": {"discord_id": req_info["discord_id"]}}},
         )
+        webhooks.send_accept_waitlist(req_info)
         return req_info
 
 
@@ -213,9 +250,7 @@ async def create_categories(user: auth.UserDep, request: Request, project_id: st
         )
 
 
-# @router.get("/project/{name}/issues")
-# async def get_exact(name: str):
-#     return utils.prepare_json(db.projects.find({"name": name}))
+### DELETE ###
 
 
 @router.get("/project/{project_id}/category/{category}/issues")
@@ -255,10 +290,18 @@ async def get_all_by_category(user: auth.UserDep, project_id: str, category: str
             {"$sort": {"weight": 1}},
         ]
     )
-    return utils.prepare_json(issues)
 
+    if not find_member:
+        raise HTTPException(
+            status_code=503,
+            detail=f"Could not find user on waitlist",
+        )
 
-# @router.get("/category/{category}/issues")
-# async def get_all_by_category(category: str):
-#     issues = list(db.issues.find({"category": category}))
-#     return utils.prepare_json(issues)
+    elif find_member:
+        db.projects.update_one(
+            {
+                "_id": ObjectId(project_id),
+            },
+            {"$pull": {"waitlist": {"discord_id": req_info["discord_id"]}}},
+        )
+        webhooks.send_reject_waitlist(req_info)
