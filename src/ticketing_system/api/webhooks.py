@@ -21,7 +21,7 @@ def create_embed(message, color, title):
 def send_new_issue(issue):
     description = f"[click here to see issue in website](https://modforge.gg/issue/{issue['_id']})"
     discord_id = issue["playerData"]["discord_id"]
-    discord_name = issue["playerData"]["name"]
+    discord_name = issue["playerData"]["username"]
     discord_avatar_id = issue["playerData"]["avatar"]
     category = issue["category"]
 
@@ -55,7 +55,7 @@ def send_update_issue(diff, issue, user_info):
     message_list = []
     discord_id = user_info["discord_id"]
     discord_name = user_info["username"]
-    author_name = issue["playerData"]["name"]
+    author_name = issue["playerData"]["username"]
     discord_avatar_id = user_info["avatar"]
 
     embed = discord.Embed(
@@ -128,7 +128,7 @@ def send_update_issue(diff, issue, user_info):
 def send_deleted_issue(issue, user_info):
     discord_id = user_info["discord_id"]
     discord_name = user_info["username"]
-    author_name = issue["playerData"]["name"]
+    author_name = issue["playerData"]["username"]
     discord_avatar_id = user_info["avatar"]
     category = issue["category"]
 
@@ -140,7 +140,7 @@ def send_deleted_issue(issue, user_info):
     embed = discord.Embed(color=color, title=f"{author_name}'s Issue was Deleted!")
 
     embed.add_field(name="Summary", value=issue["summary"], inline=False)
-    embed.add_field(name="Player", value=issue["playerData"]["name"], inline=True)
+    embed.add_field(name="Player", value=issue["playerData"]["username"], inline=True)
     embed.add_field(name="Type", value=issue["type"], inline=False)
     embed.add_field(name="Category", value=category, inline=True)
     embed.add_field(name="Version", value=issue["version"], inline=True)
