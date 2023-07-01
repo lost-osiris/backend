@@ -74,6 +74,7 @@ async def get_exact(user: auth.UserDep, request: Request):
 @router.put("/issue/{issue_id}")
 async def update_issue(user: auth.UserDep, issue_id, request: Request):
     req_info = await request.json()
+    print(req_info)
     issue_id = ObjectId(issue_id)
     issue = utils.prepare_json(db.issues.find_one({"_id": issue_id}))
 
