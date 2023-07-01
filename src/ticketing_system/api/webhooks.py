@@ -186,7 +186,6 @@ def send_accept_waitlist(user_info):
 
 
 def send_reject_waitlist(user_info):
-    print(user_info)
     color = Color.red()
     discord_id = user_info["discord_id"]
     discord_name = user_info["username"]
