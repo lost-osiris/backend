@@ -75,13 +75,14 @@ async def update_issue(user: auth.UserDep, issue_id, request: Request):
     req_info = await request.json()
     issue_id = ObjectId(issue_id)
     issue = utils.prepare_json(db.issues.find_one({"_id": issue_id}))
-    project_roles = user_models.get_user_project_roles(
-        user["discord_id"], project_id=issue["project_id"]
-    )
 
-    has_contributor = [i for i in project_roles if "contributor" in i["roles"]]
+    user_projects = [
+        i for i in user["token"].user["projects"] if i["id"] == issue["project_id"]
+    ]
 
-    if user["discord_id"] != issue["playerData"]["id"] or not has_contributor:
+    has_contributor = [i for i in user_projects if "contributor" in i["roles"]]
+
+    if user["discord_id"] != issue["discord_id"] or not has_contributor:
         raise HTTPException(
             status_code=403,
             detail="User does not have permissions to perform update on issue.",
@@ -89,9 +90,11 @@ async def update_issue(user: auth.UserDep, issue_id, request: Request):
 
     issue_info = req_info["issue"]
     issue_info["category"] = issue_info["category"].lower()
-    user_info = req_info["userInfo"]["data"]
+    user_info = req_info["userInfo"]
 
-    issue_info = {k: v for k, v in issue_info.items() if k != "playerData"}
+    issue_info = {
+        k: v for k, v in issue_info.items() if k != "playerData" and k != "weight"
+    }
     user_info = {k: user_info[k] for k in ["discord_id", "avatar", "username"]}
 
     issue_info.pop("id")
@@ -107,6 +110,10 @@ async def update_issue(user: auth.UserDep, issue_id, request: Request):
             continue
 
         diff.append({"new": value, "old": issue[key], "key": key})
+
+    issue["playerData"] = utils.prepare_json(
+        db.users.find_one({"discord_id": issue["discord_id"]})
+    )
 
     webhooks.send_update_issue(diff, issue, user_info)
 
