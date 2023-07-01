@@ -177,6 +177,20 @@ async def create_project_webhook(request: Request):
 async def update_waitlist(project_id: str, request: Request):
     req_info = await request.json()
 
+    get_user_info = utils.prepare_json(
+        db.users.find_one(
+            {"discord_id": req_info["member"]["discord_id"]},
+            {"avatar": 1, "_id": 0},
+        )
+    )
+
+    webhook_data = {
+        "discord_id": req_info["member"]["discord_id"],
+        "username": req_info["member"]["username"],
+        "avatar": get_user_info["avatar"],
+        "role": req_info["role"],
+    }
+
     find_member = db.projects.find(
         {"_id": ObjectId(project_id)},
         {
@@ -198,7 +212,7 @@ async def update_waitlist(project_id: str, request: Request):
             },
             {"$pull": {"waitlist": {"discord_id": req_info["member"]["discord_id"]}}},
         )
-        webhooks.send_reject_waitlist(req_info["member"])
+        webhooks.send_reject_waitlist(webhook_data)
 
     elif not find_member[0]:
         insert_info = {
@@ -215,7 +229,7 @@ async def update_waitlist(project_id: str, request: Request):
             },
             {"$pull": {"waitlist": {"discord_id": req_info["member"]["discord_id"]}}},
         )
-        webhooks.send_accept_waitlist(req_info["member"])
+        webhooks.send_accept_waitlist(webhook_data)
 
     return req_info
 
@@ -308,18 +322,4 @@ async def get_all_by_category(user: auth.UserDep, project_id: str, category: str
             {"$sort": {"weight": 1}},
         ]
     )
-
-    if not find_member:
-        raise HTTPException(
-            status_code=503,
-            detail=f"Could not find user on waitlist",
-        )
-
-    elif find_member:
-        db.projects.update_one(
-            {
-                "_id": ObjectId(project_id),
-            },
-            {"$pull": {"waitlist": {"discord_id": req_info["discord_id"]}}},
-        )
-        webhooks.send_reject_waitlist(req_info)
+    return utils.prepare_json(issues)

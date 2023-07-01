@@ -109,23 +109,6 @@ async def update_issue(user: auth.UserDep, issue_id, request: Request):
     return utils.prepare_json(issue)
 
 
-@router.post("/issue")
-async def create_issue(user: auth.UserDep, request: Request):
-    req_info = await request.json()
-    req_info["category"] = req_info["category"].lower()
-
-    # TODO: check to see if user_id is allowed to create this issue on the project_name
-
-    try:
-        issue = db.issues.insert_one(req_info)
-    except:
-        print(traceback.format_exc())
-        raise HTTPException(status_code=503, detail="Unable write issue to database")
-
-    webhooks.send_new_issue(req_info)
-    return utils.prepare_json(issue.inserted_id)
-
-
 @router.delete("/issue/{issue_id}")
 async def delete_issue(user: auth.UserDep, issue_id, request: Request):
     req_info = await request.json()
