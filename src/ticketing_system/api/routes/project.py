@@ -302,7 +302,7 @@ async def get_all_by_category(user: auth.UserDep, project_id: str, category: str
                     "category": 1,
                     "playerData": 1,
                     "version": 1,
-                    "archive": 1,
+                    "archived": 1,
                     "project_id": 1,
                     "type": 1,
                     "summary": 1,
