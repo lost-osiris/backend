@@ -162,9 +162,8 @@ def send_join_waitlist(user_info):
         color=color, title=f"{discord_name} has requested to join Pale Court"
     )
 
-    embed.set_author(
-        name=discord_name,
-        icon_url=f"https://cdn.discordapp.com/avatars/{discord_id}/{discord_avatar_id}.png",
+    embed.set_thumbnail(
+        url=f"https://cdn.discordapp.com/avatars/{discord_id}/{discord_avatar_id}.png",
     )
     webhook.send(embed=embed)
 
@@ -176,12 +175,12 @@ def send_accept_waitlist(user_info):
     discord_avatar_id = user_info["avatar"]
 
     embed = discord.Embed(
-        color=color, title=f"{discord_name} has been accepted into Pale Court"
+        color=color,
+        title=f"{discord_name} has been accepted into Pale Court as a {user_info['role']}",
     )
 
-    embed.set_author(
-        name=discord_name,
-        icon_url=f"https://cdn.discordapp.com/avatars/{discord_id}/{discord_avatar_id}.png",
+    embed.set_thumbnail(
+        url=f"https://cdn.discordapp.com/avatars/{discord_id}/{discord_avatar_id}.png",
     )
     webhook.send(embed=embed)
 
@@ -195,9 +194,7 @@ def send_reject_waitlist(user_info):
     embed = discord.Embed(
         color=color, title=f"{discord_name} was rejected from joining Pale Court"
     )
-
-    embed.set_author(
-        name=discord_name,
-        icon_url=f"https://cdn.discordapp.com/avatars/{discord_id}/{discord_avatar_id}.png",
+    embed.set_thumbnail(
+        url=f"https://cdn.discordapp.com/avatars/{discord_id}/{discord_avatar_id}.png",
     )
     webhook.send(embed=embed)

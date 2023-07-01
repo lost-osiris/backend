@@ -98,7 +98,7 @@ async def get_waitlist(project_id):
 
 
 @router.post("/project/{project_id}/members/joinwaitlist")
-async def join_waitlist(user: auth.UserDep, project_id: str, request: Request):
+async def join_waitlist(project_id: str, request: Request):
     req_info = await request.json()
     find_member = db.projects.find(
         {"_id": ObjectId(project_id)},
@@ -127,7 +127,8 @@ async def join_waitlist(user: auth.UserDep, project_id: str, request: Request):
         else:
             insert_info = {
                 "discord_id": req_info["discord_id"],
-                "name": req_info["name"],
+                "username": req_info["username"],
+                "avatar": req_info["avatar"],
             }
             db.projects.update_one(
                 {"_id": ObjectId(project_id)},
@@ -173,11 +174,29 @@ async def create_project_webhook(request: Request):
 
 
 @router.put("/project/{project_id}/members/updatewaitlist")
-async def update_waitlist(user: auth.UserDep, project_id: str, request: Request):
+async def update_waitlist(project_id: str, request: Request):
     req_info = await request.json()
+
+    get_user_info = utils.prepare_json(
+        db.users.find_one(
+            {"discord_id": req_info["member"]["discord_id"]},
+            {"avatar": 1, "_id": 0},
+        )
+    )
+
+    webhook_data = {
+        "discord_id": req_info["member"]["discord_id"],
+        "username": req_info["member"]["username"],
+        "avatar": get_user_info["avatar"],
+        "role": req_info["role"],
+    }
+
     find_member = db.projects.find(
         {"_id": ObjectId(project_id)},
-        {"_id": 0, "members": {"$elemMatch": {"discord_id": req_info["discord_id"]}}},
+        {
+            "_id": 0,
+            "members": {"$elemMatch": {"discord_id": req_info["member"]["discord_id"]}},
+        },
     )
 
     if find_member[0]:
@@ -186,8 +205,20 @@ async def update_waitlist(user: auth.UserDep, project_id: str, request: Request)
             detail=f"User already a member of this project",
         )
 
+    elif not find_member[0] and req_info["role"] == "remove":
+        db.projects.update_one(
+            {
+                "_id": ObjectId(project_id),
+            },
+            {"$pull": {"waitlist": {"discord_id": req_info["member"]["discord_id"]}}},
+        )
+        webhooks.send_reject_waitlist(webhook_data)
+
     elif not find_member[0]:
-        insert_info = {"discord_id": req_info["discord_id"], "role": req_info["role"]}
+        insert_info = {
+            "discord_id": req_info["member"]["discord_id"],
+            "role": req_info["role"],
+        }
         db.projects.update_one(
             {"_id": ObjectId(project_id)},
             {"$push": {"members": insert_info}},
@@ -196,10 +227,11 @@ async def update_waitlist(user: auth.UserDep, project_id: str, request: Request)
             {
                 "_id": ObjectId(project_id),
             },
-            {"$pull": {"waitlist": {"discord_id": req_info["discord_id"]}}},
+            {"$pull": {"waitlist": {"discord_id": req_info["member"]["discord_id"]}}},
         )
-        webhooks.send_accept_waitlist(req_info)
-        return req_info
+        webhooks.send_accept_waitlist(webhook_data)
+
+    return req_info
 
 
 @router.get("/project/{project_id}/member/{discord_id}", status_code=204)
