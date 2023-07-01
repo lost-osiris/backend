@@ -18,11 +18,12 @@ db = utils.get_db_client()
 async def get_one(issue_id, user: auth.UserDep):
     issue = utils.prepare_json(db.issues.find_one({"_id": ObjectId(issue_id)}))
     if issue:
-        user = db.users.find_one(
-            {"discord_id": issue["playerData"]["id"]},
+        user = utils.prepare_json(
+            db.users.find_one(
+                {"discord_id": issue["discord_id"]},
+            )
         )
-        if user:
-            issue["playerData"] = user
+        issue["playerData"] = user or {}
 
     return issue
 
