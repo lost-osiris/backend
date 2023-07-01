@@ -8,10 +8,12 @@ from . import utils
 load_dotenv()
 
 IGNORED_UPDATE_EVENT_KEYS = ["modlogs", "description", "attachments", "project_id"]
-# webhook = discord.SyncWebhook.from_url(os.getenv("WEBHOOK_URL"))
-webhook = discord.SyncWebhook.from_url(
-    "https://discordapp.com/api/webhooks/1075674946715525120/uHhuAUGWxX3-QfipUTapVmmHK0Ch9L31r0zkpqB7zj8xhTvH5y2kuAb7XZUtxmlEtg-3",
-)
+webhook_issues = discord.SyncWebhook.from_url(os.getenv("WEBHOOK_ISSUES"))
+webhook_waitlist = discord.SyncWebhook.from_url(os.getenv("WEBHOOK_WAITLIST"))
+
+# webhook = discord.SyncWebhook.from_url(
+#     "https://discordapp.com/api/webhooks/1075674946715525120/uHhuAUGWxX3-QfipUTapVmmHK0Ch9L31r0zkpqB7zj8xhTvH5y2kuAb7XZUtxmlEtg-3",
+# )
 
 
 def create_embed(message, color, title):
@@ -45,7 +47,7 @@ def send_new_issue(issue):
         icon_url=f"https://cdn.discordapp.com/avatars/{discord_id}/{discord_avatar_id}.png",
     )
 
-    webhook.send(embed=embed)
+    webhook_issues.send(embed=embed)
 
 
 def send_update_issue(diff, issue, user_info):
@@ -100,7 +102,7 @@ def send_update_issue(diff, issue, user_info):
         embed.set_footer(
             text="Description, Modlogs, and Attachments not shown, click above link to view"
         )
-        webhook.send(embed=embed)
+        webhook_issues.send(embed=embed)
 
     elif len(ignored_update_list) == 0:
         for message in message_list:
@@ -122,7 +124,7 @@ def send_update_issue(diff, issue, user_info):
         embed.set_footer(
             text="Description, Modlogs, and Attachments not shown, click above link to view"
         )
-        webhook.send(embed=embed)
+        webhook_issues.send(embed=embed)
 
 
 def send_deleted_issue(issue, user_info):
@@ -149,7 +151,7 @@ def send_deleted_issue(issue, user_info):
         name=discord_name,
         icon_url=f"https://cdn.discordapp.com/avatars/{discord_id}/{discord_avatar_id}.png",
     )
-    webhook.send(embed=embed)
+    webhook_issues.send(embed=embed)
 
 
 def send_join_waitlist(user_info):
@@ -165,7 +167,7 @@ def send_join_waitlist(user_info):
     embed.set_thumbnail(
         url=f"https://cdn.discordapp.com/avatars/{discord_id}/{discord_avatar_id}.png",
     )
-    webhook.send(embed=embed)
+    webhook_waitlist.send(embed=embed)
 
 
 def send_accept_waitlist(user_info):
@@ -182,7 +184,7 @@ def send_accept_waitlist(user_info):
     embed.set_thumbnail(
         url=f"https://cdn.discordapp.com/avatars/{discord_id}/{discord_avatar_id}.png",
     )
-    webhook.send(embed=embed)
+    webhook_waitlist.send(embed=embed)
 
 
 def send_reject_waitlist(user_info):
@@ -197,4 +199,4 @@ def send_reject_waitlist(user_info):
     embed.set_thumbnail(
         url=f"https://cdn.discordapp.com/avatars/{discord_id}/{discord_avatar_id}.png",
     )
-    webhook.send(embed=embed)
+    webhook_waitlist.send(embed=embed)
