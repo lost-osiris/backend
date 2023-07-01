@@ -59,15 +59,6 @@ async def create_issue(user_auth: auth.UserDep, request: Request):
     return utils.prepare_json(issue.inserted_id)
 
 
-@router.post("/issue/findexact")
-async def get_exact(user: auth.UserDep, request: Request):
-    req_info = await request.json()
-    if req_info.get("_id"):
-        del req_info["_id"]
-
-    return utils.prepare_json(db.issues.find_one(req_info))
-
-
 ### PUT ###
 
 
@@ -91,6 +82,7 @@ async def update_issue(user: auth.UserDep, issue_id, request: Request):
         )
 
     issue_info = req_info["issue"]
+    issue_info["project_id"] = ObjectId(issue_info["project_id"])
     issue_info["category"] = issue_info["category"].lower()
     user_info = req_info["userInfo"]
 
