@@ -145,8 +145,6 @@ async def get_code_run_exchange(code: str, redirect_uri: str):
 
     access_token = create_access_token(
         data={
-            "discord_access_token": response_data["access_token"],
-            "discord": r.json(),
             "user": user,
             "sub": user["id"],
         }
