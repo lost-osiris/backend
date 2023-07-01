@@ -234,23 +234,6 @@ async def update_waitlist(project_id: str, request: Request):
     return req_info
 
 
-@router.get("/project/{project_id}/member/{discord_id}", status_code=204)
-async def find_member(user: auth.UserDep, project_id: str, discord_id: str):
-    find_member = db.projects.find(
-        {"_id": ObjectId(project_id)},
-        {"_id": 0, "members": {"$elemMatch": {"discord_id": discord_id}}},
-    )
-
-    if find_member[0]:
-        return
-
-    if not find_member[0]:
-        raise HTTPException(
-            status_code=503,
-            detail=f"User not found in project",
-        )
-
-
 @router.get("/project/{project_id}/categories")
 async def create_categories(user: auth.UserDep, project_id: str):
     project = db.projects.find_one({"_id": ObjectId(project_id)})
