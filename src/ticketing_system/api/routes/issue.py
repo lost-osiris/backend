@@ -45,6 +45,22 @@ async def create_issue(user_auth: auth.UserDep, request: Request):
     req_info["category"] = req_info["category"].lower()
     req_info["project_id"] = ObjectId(req_info["project_id"])
 
+    user_projects = [
+        i for i in user_auth["token"].user["projects"] if i["id"] == issue["project_id"]
+    ]
+
+    has_contributor = [
+        i
+        for i in user_projects
+        if "contributor" in i["roles"] or "maintainer" in i["roles"]
+    ]
+
+    if user_auth["discord_id"] != issue["discord_id"] or not has_contributor:
+        raise HTTPException(
+            status_code=403,
+            detail="User does not have permissions to perform update on issue.",
+        )
+
     # TODO: check to see if user_id is allowed to create this issue on the project_name
 
     try:
@@ -73,7 +89,11 @@ async def update_issue(user: auth.UserDep, issue_id, request: Request):
         i for i in user["token"].user["projects"] if i["id"] == issue["project_id"]
     ]
 
-    has_contributor = [i for i in user_projects if "contributor" in i["roles"]]
+    has_contributor = [
+        i
+        for i in user_projects
+        if "contributor" in i["roles"] or "maintainer" in i["roles"]
+    ]
 
     if user["discord_id"] != issue["discord_id"] or not has_contributor:
         raise HTTPException(
@@ -115,18 +135,19 @@ async def update_issue(user: auth.UserDep, issue_id, request: Request):
 
 
 @router.delete("/issue/{issue_id}")
-async def delete_issue(user_auth: auth.UserDep, issue_id, request: Request):
+async def delete_issue(user_auth: auth.UserDep, issue_id):
     user = user_auth["token"].user
-
-    req_info = await request.json()
-    user_info = {k: req_info[k] for k in ["discord_id", "avatar", "username"]}
 
     issue = db.issues.find_one({"_id": ObjectId(issue_id)})
     issue["playerData"] = utils.prepare_json(
         db.users.find_one({"discord_id": issue["discord_id"]})
     )
 
-    has_contributor = [i for i in user["projects"] if "contributor" in i["roles"]]
+    has_contributor = [
+        i
+        for i in user["projects"]
+        if "contributor" in i["roles"] or "maintainer" in i["roles"]
+    ]
 
     if user["discord_id"] != issue["discord_id"] or not has_contributor:
         raise HTTPException(
@@ -136,4 +157,4 @@ async def delete_issue(user_auth: auth.UserDep, issue_id, request: Request):
 
     db.issues.find_one_and_delete({"_id": ObjectId(issue_id)})
 
-    webhooks.send_deleted_issue(issue, user_info)
+    webhooks.send_deleted_issue(issue, user)
