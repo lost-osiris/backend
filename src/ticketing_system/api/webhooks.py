@@ -150,3 +150,55 @@ def send_deleted_issue(issue, user_info):
         icon_url=f"https://cdn.discordapp.com/avatars/{discord_id}/{discord_avatar_id}.png",
     )
     webhook.send(embed=embed)
+
+
+def send_join_waitlist(user_info):
+    color = Color.blurple()
+    discord_id = user_info["discord_id"]
+    discord_name = user_info["username"]
+    discord_avatar_id = user_info["avatar"]
+
+    embed = discord.Embed(
+        color=color, title=f"{discord_name} has requested to join Pale Court"
+    )
+
+    embed.set_author(
+        name=discord_name,
+        icon_url=f"https://cdn.discordapp.com/avatars/{discord_id}/{discord_avatar_id}.png",
+    )
+    webhook.send(embed=embed)
+
+
+def send_accept_waitlist(user_info):
+    color = Color.green()
+    discord_id = user_info["discord_id"]
+    discord_name = user_info["username"]
+    discord_avatar_id = user_info["avatar"]
+
+    embed = discord.Embed(
+        color=color,
+        title=f"{discord_name} has been accepted into Pale Court as a {user_info['role']}",
+    )
+
+    embed.set_author(
+        name=discord_name,
+        icon_url=f"https://cdn.discordapp.com/avatars/{discord_id}/{discord_avatar_id}.png",
+    )
+    webhook.send(embed=embed)
+
+
+def send_reject_waitlist(user_info):
+    color = Color.red()
+    discord_id = user_info["discord_id"]
+    discord_name = user_info["username"]
+    discord_avatar_id = user_info["avatar"]
+
+    embed = discord.Embed(
+        color=color, title=f"{discord_name} was rejected from joining Pale Court"
+    )
+
+    embed.set_author(
+        name=discord_name,
+        icon_url=f"https://cdn.discordapp.com/avatars/{discord_id}/{discord_avatar_id}.png",
+    )
+    webhook.send(embed=embed)
