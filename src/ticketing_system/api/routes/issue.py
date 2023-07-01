@@ -41,6 +41,7 @@ async def get_one(user: auth.UserDep, issue_id):
 @router.post("/issue")
 async def create_issue(request: Request):
     req_info = await request.json()
+    print(req_info)
     req_info["category"] = req_info["category"].lower()
 
     # TODO: check to see if user_id is allowed to create this issue on the project_name
