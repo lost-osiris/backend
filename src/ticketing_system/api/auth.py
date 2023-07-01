@@ -25,7 +25,9 @@ from .models import user as user_models
 SECRET_KEY = os.getenv("CLIENT_SECRET")
 APP_ID = os.getenv("APPLICATION_ID")
 
-PROD_AUTH_REDIRECT = "https://modforge.gg/"
+PROD_AUTH_REDIRECT = (
+    "https://modforge.gg/api/auth/discord?redirect_uri=https://modforge.gg"
+)
 ALGORITHM = "HS256"
 ACCESS_TOKEN_EXPIRE_MINUTES = 720
 

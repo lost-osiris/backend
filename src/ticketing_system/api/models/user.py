@@ -82,7 +82,11 @@ def get_user_project_roles(discord_id, project_id=None):
                     "id": project["_id"],
                     "name": project["name"],
                     "version": project["version"],
-                    "roles": [i["role"] for i in project["members"]],
+                    "roles": [
+                        i["role"]
+                        for i in project["members"]
+                        if i["discord_id"] == discord_id
+                    ],
                 }
                 for project in query
             ]
