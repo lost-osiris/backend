@@ -122,6 +122,10 @@ async def get_code_run_exchange(code: str, redirect_uri: str):
         "client_secret": SECRET_KEY,
         "grant_type": "authorization_code",
         "code": code,
+<<<<<<< Updated upstream
+=======
+        # "redirect_uri": PROD_AUTH_REDIRECT,
+>>>>>>> Stashed changes
         "redirect_uri": "http://localhost:3000/api/auth/discord?redirect_uri=http://localhost:3000"
         if os.getenv("IS_DEV")
         else PROD_AUTH_REDIRECT,
