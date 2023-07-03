@@ -2,10 +2,12 @@ from fastapi import APIRouter, Request, HTTPException, Depends
 from bson import ObjectId
 from .. import utils
 from .. import webhooks
-import traceback
 from typing import Annotated
 from .. import auth
 from ..models import user as user_models
+
+import traceback
+import os
 
 router = APIRouter(prefix="/api")
 db = utils.get_db_client()
@@ -41,21 +43,17 @@ async def get_one(user: auth.UserDep, issue_id):
 @router.post("/issue")
 async def create_issue(user_auth: auth.UserDep, request: Request):
     req_info = await request.json()
-    print(req_info)
     req_info["category"] = req_info["category"].lower()
-    req_info["project_id"] = ObjectId(req_info["project_id"])
 
     user_projects = [
-        i for i in user_auth["token"].user["projects"] if i["id"] == issue["project_id"]
-    ]
-
-    has_contributor = [
         i
-        for i in user_projects
-        if "contributor" in i["roles"] or "maintainer" in i["roles"]
+        for i in user_auth["token"].user["projects"]
+        if i["id"] == req_info["project_id"]
     ]
 
-    if user_auth["discord_id"] != issue["discord_id"] or not has_contributor:
+    has_permissions = [i for i in user_projects if "maintainer" in i["roles"]]
+
+    if user_auth["discord_id"] != req_info["discord_id"] or not has_permissions:
         raise HTTPException(
             status_code=403,
             detail="User does not have permissions to perform update on issue.",
@@ -64,6 +62,7 @@ async def create_issue(user_auth: auth.UserDep, request: Request):
     # TODO: check to see if user_id is allowed to create this issue on the project_name
 
     try:
+        req_info["project_id"] = ObjectId(req_info["project_id"])
         issue = db.issues.insert_one(req_info)
     except:
         print(traceback.format_exc())
@@ -72,6 +71,7 @@ async def create_issue(user_auth: auth.UserDep, request: Request):
     req_info["playerData"] = user_auth["token"].user
 
     webhooks.send_new_issue(req_info)
+
     return utils.prepare_json(issue.inserted_id)
 
 
@@ -81,7 +81,6 @@ async def create_issue(user_auth: auth.UserDep, request: Request):
 @router.put("/issue/{issue_id}")
 async def update_issue(user: auth.UserDep, issue_id, request: Request):
     req_info = await request.json()
-    print(req_info)
     issue_id = ObjectId(issue_id)
     issue = utils.prepare_json(db.issues.find_one({"_id": issue_id}))
 
@@ -89,13 +88,9 @@ async def update_issue(user: auth.UserDep, issue_id, request: Request):
         i for i in user["token"].user["projects"] if i["id"] == issue["project_id"]
     ]
 
-    has_contributor = [
-        i
-        for i in user_projects
-        if "contributor" in i["roles"] or "maintainer" in i["roles"]
-    ]
+    has_permissions = [i for i in user_projects if "maintainer" in i["roles"]]
 
-    if user["discord_id"] != issue["discord_id"] or not has_contributor:
+    if user["discord_id"] != issue["discord_id"] or not has_permissions:
         raise HTTPException(
             status_code=403,
             detail="User does not have permissions to perform update on issue.",
@@ -143,13 +138,9 @@ async def delete_issue(user_auth: auth.UserDep, issue_id):
         db.users.find_one({"discord_id": issue["discord_id"]})
     )
 
-    has_contributor = [
-        i
-        for i in user["projects"]
-        if "contributor" in i["roles"] or "maintainer" in i["roles"]
-    ]
+    has_permissions = [i for i in user["projects"] if "maintainer" in i["roles"]]
 
-    if user["discord_id"] != issue["discord_id"] or not has_contributor:
+    if user["discord_id"] != issue["discord_id"] or not has_permissions:
         raise HTTPException(
             status_code=403,
             detail="User does not have permissions to perform update on issue.",

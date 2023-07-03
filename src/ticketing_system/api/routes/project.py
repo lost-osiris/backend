@@ -239,7 +239,7 @@ async def update_waitlist(user: auth.UserDep, project_id: str, request: Request)
 
 
 @router.get("/project/{project_id}/categories")
-async def create_categories(user: auth.UserDep, project_id: str):
+async def get_categories(user: auth.UserDep, project_id: str):
     project = db.projects.find_one({"_id": ObjectId(project_id)})
 
     if not project:
