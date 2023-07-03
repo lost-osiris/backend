@@ -44,7 +44,6 @@ async def get_one(user: auth.UserDep, issue_id):
 async def create_issue(user_auth: auth.UserDep, request: Request):
     req_info = await request.json()
     req_info["category"] = req_info["category"].lower()
-<<<<<<< Updated upstream
 
     user_projects = [
         i
@@ -59,31 +58,6 @@ async def create_issue(user_auth: auth.UserDep, request: Request):
             status_code=403,
             detail="User does not have permissions to perform update on issue.",
         )
-=======
-    req_info["project_id"] = ObjectId(req_info["project_id"])
-    discord_id = req_info["discord_id"]
-    # print(f"{user_auth['token']['user_id={discord_id}']}")
-    for key, value in user_auth.items():
-        print(f"Key: {key}, Value: {value}")
-
-    # user_projects = [
-    #     i
-    #     for i in user_auth["token"].user["projects"]
-    #     if i["id"] == req_info["project_id"]
-    # ]
-
-    # has_contributor = [
-    #     i
-    #     for i in user_projects
-    #     if "contributor" in i["roles"] or "maintainer" in i["roles"]
-    # ]
-
-    # if user_auth["discord_id"] != req_info["discord_id"] or not has_contributor:
-    #     raise HTTPException(
-    #         status_code=403,
-    #         detail="User does not have permissions to perform update on issue.",
-    #     )
->>>>>>> Stashed changes
 
     # try:
     #     issue = db.issues.insert_one(req_info)
@@ -91,7 +65,6 @@ async def create_issue(user_auth: auth.UserDep, request: Request):
     #     print(traceback.format_exc())
     #     raise HTTPException(status_code=503, detail="Unable write issue to database")
 
-<<<<<<< Updated upstream
     try:
         req_info["project_id"] = ObjectId(req_info["project_id"])
         issue = db.issues.insert_one(req_info)
@@ -104,12 +77,6 @@ async def create_issue(user_auth: auth.UserDep, request: Request):
     webhooks.send_new_issue(req_info)
 
     return utils.prepare_json(issue.inserted_id)
-=======
-    # req_info["playerData"] = user_auth["token"].user
-
-    # webhooks.send_new_issue(req_info)
-    # return utils.prepare_json(issue.inserted_id)
->>>>>>> Stashed changes
 
 
 ### PUT ###
