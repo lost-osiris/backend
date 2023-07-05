@@ -100,16 +100,7 @@ async def update_issue(user: auth.UserDep, issue_id, request: Request):
         else:
             has_permissions = False
 
-    # has_permissions = [i for i in user_projects if "maintainer" in i["roles"]]
-
-    if user["discord_id"] != issue["discord_id"]:
-        if not has_permissions:
-            raise HTTPException(
-                status_code=403,
-                detail="User does not have permissions to perform update on issue.",
-            )
-
-    elif has_permissions or user["discord_id"] == issue["discord_id"]:
+    if has_permissions or user["discord_id"] == issue["discord_id"]:
         issue_info = req_info["issue"]
         issue_info["project_id"] = ObjectId(issue_info["project_id"])
         issue_info["category"] = issue_info["category"].lower()
@@ -140,9 +131,14 @@ async def update_issue(user: auth.UserDep, issue_id, request: Request):
 
         if len(diff) > 0:
             webhooks.send_update_issue(diff, issue, user_info)
-            print("i can move these now!")
 
             return utils.prepare_json(issue)
+    elif user["discord_id"] != issue["discord_id"]:
+        if not has_permissions:
+            raise HTTPException(
+                status_code=403,
+                detail="User does not have permissions to perform update on issue.",
+            )
 
 
 @router.delete("/issue/{issue_id}")
@@ -154,9 +150,8 @@ async def delete_issue(user_auth: auth.UserDep, issue_id):
         db.users.find_one({"discord_id": issue["discord_id"]})
     )
 
-    # has_permissions = [i for i in user["projects"] if "maintainer" in i["roles"]]
+    user_projects = [i for i in user["projects"] if "maintainer" in i["roles"]]
 
-    user_projects = [i for i in user["projects"] if i["id"] == issue["project_id"]]
     has_permissions = bool
 
     for project in user_projects:
@@ -166,12 +161,13 @@ async def delete_issue(user_auth: auth.UserDep, issue_id):
         else:
             has_permissions = False
 
-    if user["discord_id"] != issue["discord_id"]:
+    if has_permissions or user["discord_id"] == issue["discord_id"]:
+        db.issues.find_one_and_delete({"_id": ObjectId(issue_id)})
+        webhooks.send_deleted_issue(issue, user)
+
+    elif user["discord_id"] != issue["discord_id"]:
         if not has_permissions:
             raise HTTPException(
                 status_code=403,
                 detail="User does not have permissions to perform update on issue.",
             )
-    elif has_permissions or user["discord_id"] == issue["discord_id"]:
-        db.issues.find_one_and_delete({"_id": ObjectId(issue_id)})
-        webhooks.send_deleted_issue(issue, user)
