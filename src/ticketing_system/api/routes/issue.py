@@ -104,45 +104,47 @@ async def update_issue(user: auth.UserDep, issue_id, request: Request):
 
     if user["discord_id"] != issue["discord_id"]:
         if not has_permissions:
-            print("we are hitting this")
             raise HTTPException(
                 status_code=403,
                 detail="User does not have permissions to perform update on issue.",
             )
 
-    else:
-        issue_info = req_info["issue"]
-        issue_info["project_id"] = ObjectId(issue_info["project_id"])
-        issue_info["category"] = issue_info["category"].lower()
-        user_info = req_info["userInfo"]
+        elif has_permissions:
+            issue_info = req_info["issue"]
+            issue_info["project_id"] = ObjectId(issue_info["project_id"])
+            issue_info["category"] = issue_info["category"].lower()
+            user_info = req_info["userInfo"]
 
-        issue_info = {
-            k: v for k, v in issue_info.items() if k != "playerData" and k != "weight"
-        }
-        user_info = {k: user_info[k] for k in ["discord_id", "avatar", "username"]}
+            issue_info = {
+                k: v
+                for k, v in issue_info.items()
+                if k != "playerData" and k != "weight"
+            }
+            user_info = {k: user_info[k] for k in ["discord_id", "avatar", "username"]}
 
-        issue_info.pop("id")
+            issue_info.pop("id")
 
-        issue = db.issues.find_one_and_update(
-            {"_id": issue_id}, {"$set": issue_info}, upsert=False
-        )
+            issue = db.issues.find_one_and_update(
+                {"_id": issue_id}, {"$set": issue_info}, upsert=False
+            )
 
-        diff = []
+            diff = []
 
-        for key, value in issue_info.items():
-            if value == issue[key]:
-                continue
+            for key, value in issue_info.items():
+                if value == issue[key]:
+                    continue
 
-            diff.append({"new": value, "old": issue[key], "key": key})
+                diff.append({"new": value, "old": issue[key], "key": key})
 
-        issue["playerData"] = utils.prepare_json(
-            db.users.find_one({"discord_id": issue["discord_id"]})
-        )
+            issue["playerData"] = utils.prepare_json(
+                db.users.find_one({"discord_id": issue["discord_id"]})
+            )
 
-        webhooks.send_update_issue(diff, issue, user_info)
-        print("i can move these now!")
+            if len(diff) > 0:
+                webhooks.send_update_issue(diff, issue, user_info)
+                print("i can move these now!")
 
-        return utils.prepare_json(issue)
+                return utils.prepare_json(issue)
 
 
 @router.delete("/issue/{issue_id}")
@@ -154,14 +156,24 @@ async def delete_issue(user_auth: auth.UserDep, issue_id):
         db.users.find_one({"discord_id": issue["discord_id"]})
     )
 
-    has_permissions = [i for i in user["projects"] if "maintainer" in i["roles"]]
+    # has_permissions = [i for i in user["projects"] if "maintainer" in i["roles"]]
 
-    if user["discord_id"] != issue["discord_id"] or not has_permissions:
-        raise HTTPException(
-            status_code=403,
-            detail="User does not have permissions to perform update on issue.",
-        )
+    user_projects = [i for i in user["projects"] if i["id"] == issue["project_id"]]
+    has_permissions = bool
 
-    db.issues.find_one_and_delete({"_id": ObjectId(issue_id)})
+    for project in user_projects:
+        if "roles" in project and "maintainer" in project["roles"]:
+            has_permissions = True
+            break
+        else:
+            has_permissions = False
 
-    webhooks.send_deleted_issue(issue, user)
+    if user["discord_id"] != issue["discord_id"]:
+        if not has_permissions:
+            raise HTTPException(
+                status_code=403,
+                detail="User does not have permissions to perform update on issue.",
+            )
+        elif has_permissions:
+            db.issues.find_one_and_delete({"_id": ObjectId(issue_id)})
+            webhooks.send_deleted_issue(issue, user)
