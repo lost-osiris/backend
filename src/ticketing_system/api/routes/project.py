@@ -138,7 +138,7 @@ async def join_waitlist(user_auth: auth.UserDep, project_id: str, request: Reque
                 {"_id": ObjectId(project_id)},
                 {"$push": {"waitlist": insert_info}},
             )
-            # webhooks.send_join_waitlist(user)
+            webhooks.send_join_waitlist(user)
             return req_info
 
 
@@ -216,7 +216,7 @@ async def update_waitlist(user: auth.UserDep, project_id: str, request: Request)
             },
             {"$pull": {"waitlist": {"discord_id": req_info["member"]["discord_id"]}}},
         )
-        # webhooks.send_reject_waitlist(webhook_data)
+        webhooks.send_reject_waitlist(webhook_data)
 
     elif not find_member[0]:
         insert_info = {
@@ -233,7 +233,7 @@ async def update_waitlist(user: auth.UserDep, project_id: str, request: Request)
             },
             {"$pull": {"waitlist": {"discord_id": req_info["member"]["discord_id"]}}},
         )
-        # webhooks.send_accept_waitlist(webhook_data)
+        webhooks.send_accept_waitlist(webhook_data)
 
     return req_info
 
@@ -280,7 +280,7 @@ async def get_all_by_category(user: auth.UserDep, project_id: str, category: str
                 {
                     "$match": {
                         "project_id": ObjectId(project_id),
-                        "category": category,
+                        "category": urllib.parse.unquote(category),
                     }
                 },
                 {
