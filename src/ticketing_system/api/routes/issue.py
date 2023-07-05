@@ -91,46 +91,58 @@ async def update_issue(user: auth.UserDep, issue_id, request: Request):
     user_projects = [
         i for i in user["token"].user["projects"] if i["id"] == issue["project_id"]
     ]
+    has_permissions = bool
 
-    has_permissions = [i for i in user_projects if "maintainer" in i["roles"]]
+    for project in user_projects:
+        if "roles" in project and "maintainer" in project["roles"]:
+            has_permissions = True
+            break
+        else:
+            has_permissions = False
 
-    if user["discord_id"] != issue["discord_id"] or not has_permissions:
-        raise HTTPException(
-            status_code=403,
-            detail="User does not have permissions to perform update on issue.",
+    # has_permissions = [i for i in user_projects if "maintainer" in i["roles"]]
+
+    if user["discord_id"] != issue["discord_id"]:
+        if not has_permissions:
+            print("we are hitting this")
+            raise HTTPException(
+                status_code=403,
+                detail="User does not have permissions to perform update on issue.",
+            )
+
+    else:
+        issue_info = req_info["issue"]
+        issue_info["project_id"] = ObjectId(issue_info["project_id"])
+        issue_info["category"] = issue_info["category"].lower()
+        user_info = req_info["userInfo"]
+
+        issue_info = {
+            k: v for k, v in issue_info.items() if k != "playerData" and k != "weight"
+        }
+        user_info = {k: user_info[k] for k in ["discord_id", "avatar", "username"]}
+
+        issue_info.pop("id")
+
+        issue = db.issues.find_one_and_update(
+            {"_id": issue_id}, {"$set": issue_info}, upsert=False
         )
 
-    issue_info = req_info["issue"]
-    issue_info["project_id"] = ObjectId(issue_info["project_id"])
-    issue_info["category"] = issue_info["category"].lower()
-    user_info = req_info["userInfo"]
+        diff = []
 
-    issue_info = {
-        k: v for k, v in issue_info.items() if k != "playerData" and k != "weight"
-    }
-    user_info = {k: user_info[k] for k in ["discord_id", "avatar", "username"]}
+        for key, value in issue_info.items():
+            if value == issue[key]:
+                continue
 
-    issue_info.pop("id")
+            diff.append({"new": value, "old": issue[key], "key": key})
 
-    issue = db.issues.find_one_and_update(
-        {"_id": issue_id}, {"$set": issue_info}, upsert=False
-    )
+        issue["playerData"] = utils.prepare_json(
+            db.users.find_one({"discord_id": issue["discord_id"]})
+        )
 
-    diff = []
+        webhooks.send_update_issue(diff, issue, user_info)
+        print("i can move these now!")
 
-    for key, value in issue_info.items():
-        if value == issue[key]:
-            continue
-
-        diff.append({"new": value, "old": issue[key], "key": key})
-
-    issue["playerData"] = utils.prepare_json(
-        db.users.find_one({"discord_id": issue["discord_id"]})
-    )
-
-    webhooks.send_update_issue(diff, issue, user_info)
-
-    return utils.prepare_json(issue)
+        return utils.prepare_json(issue)
 
 
 @router.delete("/issue/{issue_id}")
