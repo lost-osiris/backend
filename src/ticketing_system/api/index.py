@@ -2,8 +2,10 @@ from fastapi import FastAPI
 from fastapi.middleware.gzip import GZipMiddleware
 
 from dotenv import load_dotenv
+import os
 
-load_dotenv()
+ENV = f".{os.getenv('ENV')}" or ""
+load_dotenv(f".env{ENV}")
 
 from .routes import issue, project, user, db_updates
 from . import auth

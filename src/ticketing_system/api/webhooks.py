@@ -47,7 +47,8 @@ def send_new_issue(issue):
         icon_url=f"https://cdn.discordapp.com/avatars/{discord_id}/{discord_avatar_id}.png",
     )
 
-    webhook_issues.send(embed=embed)
+    if not os.getenv("WEBHOOK_DISABLED"):
+        webhook_issues.send(embed=embed)
 
 
 def send_update_issue(diff, issue, user_info):
@@ -102,7 +103,7 @@ def send_update_issue(diff, issue, user_info):
         embed.set_footer(
             text="Description, Modlogs, and Attachments not shown, click above link to view"
         )
-        if not os.getenv("IS_DEV"):
+        if not os.getenv("WEBHOOK_DISABLED"):
             webhook_issues.send(embed=embed)
 
     elif len(ignored_update_list) == 0:
@@ -126,7 +127,8 @@ def send_update_issue(diff, issue, user_info):
             text="Description, Modlogs, and Attachments not shown, click above link to view"
         )
 
-        webhook_issues.send(embed=embed)
+        if not os.getenv("WEBHOOK_DISABLED"):
+            webhook_issues.send(embed=embed)
 
 
 def send_deleted_issue(issue, user_info):
@@ -170,7 +172,8 @@ def send_join_waitlist(user_info):
     embed.set_thumbnail(
         url=f"https://cdn.discordapp.com/avatars/{discord_id}/{discord_avatar_id}.png",
     )
-    webhook_waitlist.send(embed=embed)
+    if not os.getenv("WEBHOOK_DISABLED"):
+        webhook_waitlist.send(embed=embed)
 
 
 def send_accept_waitlist(user_info):
@@ -188,7 +191,8 @@ def send_accept_waitlist(user_info):
         url=f"https://cdn.discordapp.com/avatars/{discord_id}/{discord_avatar_id}.png",
     )
 
-    webhook_waitlist.send(embed=embed)
+    if not os.getenv("WEBHOOK_DISABLED"):
+        webhook_waitlist.send(embed=embed)
 
 
 def send_reject_waitlist(user_info):
@@ -204,4 +208,5 @@ def send_reject_waitlist(user_info):
         url=f"https://cdn.discordapp.com/avatars/{discord_id}/{discord_avatar_id}.png",
     )
 
-    webhook_waitlist.send(embed=embed)
+    if not os.getenv("WEBHOOK_DISABLED"):
+        webhook_waitlist.send(embed=embed)
