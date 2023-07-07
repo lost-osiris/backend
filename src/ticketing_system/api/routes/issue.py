@@ -1,13 +1,10 @@
-from fastapi import APIRouter, Request, HTTPException, Depends
+from fastapi import APIRouter, Request, HTTPException
 from bson import ObjectId
 from .. import utils
 from .. import webhooks
-from typing import Annotated
 from .. import auth
-from ..models import user as user_models
 
 import traceback
-import os
 
 router = APIRouter(prefix="/api")
 db = utils.get_db_client()
@@ -26,6 +23,27 @@ async def get_one(issue_id, user: auth.UserDep):
             )
         )
         issue["playerData"] = user or {}
+
+    comments = utils.prepare_json(
+        db.issue_comments.find({"issue_id": ObjectId(issue_id)})
+    )
+
+    discord_ids = [i["discord_id"] for i in comments]
+    users = {
+        i["discord_id"]: i
+        for i in utils.prepare_json(db.users.find({"discord_id": {"$in": discord_ids}}))
+    }
+
+    merged_comments = []
+    for comment in comments:
+        if comment["discord_id"] in users:
+            comment["discord"] = users[comment["discord_id"]]
+        else:
+            comment["discord"] = {}
+
+        merged_comments.append(comment)
+
+    issue["comments"] = merged_comments
 
     return issue
 

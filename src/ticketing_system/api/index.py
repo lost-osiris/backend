@@ -7,7 +7,7 @@ import os
 ENV = f".{os.getenv('ENV')}" or ""
 load_dotenv(f".env{ENV}")
 
-from .routes import issue, project, user, db_updates
+from .routes import issue, project, user, db_updates, issue_comments
 from . import auth
 
 app = FastAPI()
@@ -16,6 +16,7 @@ app.add_middleware(GZipMiddleware, minimum_size=1000)
 
 app.include_router(auth.router)
 app.include_router(issue.router)
+app.include_router(issue_comments.router)
 app.include_router(project.router)
 app.include_router(user.router)
 app.include_router(db_updates.router)
