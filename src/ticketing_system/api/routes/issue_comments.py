@@ -2,6 +2,7 @@ from fastapi import APIRouter, HTTPException
 from bson import ObjectId
 from .. import utils
 from .. import auth
+from .. import webhooks
 from ..models.issue_comment import IssueComment
 from datetime import datetime
 
@@ -31,12 +32,26 @@ async def create_issue_comments(
                 "discord_id": user["discord_id"],
             }
         )
-        return utils.prepare_json(r.inserted_id)
+        get_issue = utils.prepare_json(
+            db.issues.find_one(
+                {"_id": ObjectId(issue_id)}, {"category": 1, "summary": 1}
+            )
+        )
+
+        passing_info = {
+            "issue_id": issue_id,
+            "category": get_issue["category"],
+            "summary": get_issue["summary"],
+            "discord_id": user_auth["discord_id"],
+            "avatar": user_auth["avatar"],
+            "username": user_auth["username"],
+        }
+
+        webhooks.send_created_comment(passing_info)
+
     except:
         print(traceback.format_exc())
         raise HTTPException(status_code=503, detail="Unable write comment to database")
-
-    # TODO: Send webhook on new comment created
 
 
 @router.put("/comment/{comment_id}")

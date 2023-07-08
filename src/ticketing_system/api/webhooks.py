@@ -7,9 +7,16 @@ from . import utils
 
 load_dotenv()
 
-IGNORED_UPDATE_EVENT_KEYS = ["modlogs", "description", "attachments", "project_id"]
+IGNORED_UPDATE_EVENT_KEYS = [
+    "modlogs",
+    "description",
+    "attachments",
+    "project_id",
+    "summary",
+]
 webhook_issues = discord.SyncWebhook.from_url(os.getenv("WEBHOOK_ISSUES"))
 webhook_waitlist = discord.SyncWebhook.from_url(os.getenv("WEBHOOK_WAITLIST"))
+webhook_comments = discord.SyncWebhook.from_url(os.getenv("WEBHOOK_COMMENTS"))
 
 # webhook = discord.SyncWebhook.from_url(
 #     "https://discordapp.com/api/webhooks/1075674946715525120/uHhuAUGWxX3-QfipUTapVmmHK0Ch9L31r0zkpqB7zj8xhTvH5y2kuAb7XZUtxmlEtg-3",
@@ -155,8 +162,8 @@ def send_deleted_issue(issue, user_info):
         name=discord_name,
         icon_url=f"https://cdn.discordapp.com/avatars/{discord_id}/{discord_avatar_id}.png",
     )
-
-    webhook_issues.send(embed=embed)
+    if not os.getenv("WEBHOOK_DISABLED"):
+        webhook_issues.send(embed=embed)
 
 
 def send_join_waitlist(user_info):
@@ -210,3 +217,24 @@ def send_reject_waitlist(user_info):
 
     if not os.getenv("WEBHOOK_DISABLED"):
         webhook_waitlist.send(embed=embed)
+
+
+def send_created_comment(info):
+    color = Color.green()
+    discord_id = info["discord_id"]
+    discord_name = info["username"]
+    discord_avatar_id = info["avatar"]
+    category = info["category"]
+    issue_id = info["issue_id"]
+    description = f"[{info['summary']}](https://modforge.gg/issue/{issue_id})"
+
+    embed = discord.Embed(
+        color=color,
+        title=f"{discord_name} commented on an issue involving {category}",
+        description=description,
+    )
+    embed.set_thumbnail(
+        url=f"https://cdn.discordapp.com/avatars/{discord_id}/{discord_avatar_id}.png",
+    )
+    if not os.getenv("WEBHOOK_DISABLED"):
+        webhook_comments.send(embed=embed)
