@@ -59,10 +59,9 @@ async def update_issue_comments(
     comment_id, comment: IssueComment, user_auth: auth.UserDep
 ):
     user = user_auth["token"].user
-    comment = db.issue_comments.find_one({"_id": ObjectId(comment_id)})
-    issue = db.issues.find_one({"_id": ObjectId(comment["issue_id"])})
-
-    user_projects = [i for i in user["projects"] if i["id"] == issue["project_id"]]
+    old_comment = utils.prepare_json(
+        db.issue_comments.find_one({"_id": ObjectId(comment_id)})
+    )
 
     if not comment:
         raise HTTPException(
@@ -70,20 +69,20 @@ async def update_issue_comments(
             detail="Comment not found",
         )
 
-    has_permissions = [
-        i for i in user_projects if "maintainer" in i["roles"] in i["roles"]
-    ]
-
-    if has_permissions or user["discord_id"] == comment["discord_id"]:
+    if user["discord_id"] == old_comment["discord_id"]:
         try:
-            r = db.issue_comments.insert_one(
+            print(comment.dict())
+            db.issue_comments.find_one_and_update(
+                {"_id": ObjectId(comment_id)},
                 {
-                    **comment.dict(),
-                    "comment_id": ObjectId(comment_id),
-                    "updated_at": datetime.utcnow(),
-                }
+                    "$set": {
+                        **comment.dict(),
+                        "updated_at": datetime.utcnow(),
+                    }
+                },
+                upsert=False,
             )
-            return utils.prepare_json(r.inserted_id)
+            return comment_id
         except:
             print(traceback.format_exc())
             raise HTTPException(
@@ -103,11 +102,8 @@ async def delete_issue_comments(comment_id, user_auth: auth.UserDep):
     comment = db.issue_comments.find_one({"_id": ObjectId(comment_id)})
     issue = db.issues.find_one({"_id": ObjectId(comment["issue_id"])})
 
-    user_projects = [i for i in user["projects"] if i["id"] == issue["project_id"]]
-
-    has_permissions = [
-        i for i in user_projects if "maintainer" in i["roles"] in i["roles"]
-    ]
+    user_projects = [i for i in user["projects"] if i["id"] == str(issue["project_id"])]
+    has_permissions = [i for i in user_projects if "maintainer" in i["roles"]]
 
     if has_permissions or comment["discord_id"] == user["discord_id"]:
         db.issue_comments.delete_one({"_id": ObjectId(comment_id)})
