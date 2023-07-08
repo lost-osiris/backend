@@ -45,6 +45,8 @@ async def on_ready():
 
 @bot.event
 async def on_message(message):
+    tram_list = ["tram", "trams"]
+    risto_list = ["lord and savior", "supreme overlord", "fire emblem"]
     if message.mentions:
         whitelist_roles = [
             1117918920276463707,
@@ -72,8 +74,6 @@ async def on_message(message):
                 )
                 break
 
-    tram_list = ["tram", "trams"]
-
     if any(word in message.content.lower().split() for word in tram_list):
         print("saw tram")
 
@@ -90,13 +90,20 @@ async def on_message(message):
                 tram_reply, reference=message, mention_author=False
             )
 
-    # if "risto" in message.content & assert_cooldown():
-    #     print("saw risto")
-    #     await message.channel.send(
-    #         "https://cdn.discordapp.com/attachments/825530277694144542/1077734017790656583/image.png",
-    #         reference=message,
-    #         mention_author=False,
-    #     )
+    if any(word in message.content.lower() for word in risto_list):
+        print("saw risto")
+
+        if not assert_cooldown():
+            print("on cooldown")
+            return
+
+        if message.author.bot & assert_cooldown():
+            return
+        await message.channel.send(
+            "Bow down mortals \nhttps://cdn.discordapp.com/attachments/825530277694144542/1077734017790656583/image.png",
+            reference=message,
+            mention_author=False,
+        )
 
 
 def main():
