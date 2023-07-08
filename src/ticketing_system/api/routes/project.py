@@ -296,6 +296,7 @@ async def get_all_by_category(user: auth.UserDep, project_id: str, category: str
                         "summary": 1,
                         "description": 1,
                         "_id": 1,
+                        "os": 1,
                         "weight": {
                             "$cond": [
                                 {"$eq": ["$priority", "high"]},

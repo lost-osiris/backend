@@ -5,6 +5,7 @@ from .. import webhooks
 from .. import auth
 
 import traceback
+import pymongo
 
 router = APIRouter(prefix="/api")
 db = utils.get_db_client()
@@ -25,7 +26,9 @@ async def get_one(issue_id, user: auth.UserDep):
         issue["playerData"] = user or {}
 
     comments = utils.prepare_json(
-        db.issue_comments.find({"issue_id": ObjectId(issue_id)})
+        db.issue_comments.find({"issue_id": ObjectId(issue_id)}).sort(
+            "created_at", pymongo.DESCENDING
+        )
     )
 
     discord_ids = [i["discord_id"] for i in comments]
@@ -134,10 +137,13 @@ async def update_issue(user: auth.UserDep, issue_id, request: Request):
     diff = []
 
     for key, value in issue_info.items():
-        if value == issue[key]:
-            continue
+        if key not in issue:
+            diff.append({"new": value, "old": None, "key": key})
+        else:
+            if value == issue[key]:
+                continue
 
-        diff.append({"new": value, "old": issue[key], "key": key})
+            diff.append({"new": value, "old": issue[key], "key": key})
 
     issue["playerData"] = utils.prepare_json(
         db.users.find_one({"discord_id": issue["discord_id"]})
