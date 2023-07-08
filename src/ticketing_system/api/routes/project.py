@@ -305,9 +305,16 @@ async def get_all_by_category(user: auth.UserDep, project_id: str, category: str
                                 },
                             ]
                         },
+                        "issue_type": {
+                            "$cond": [
+                                {"$eq": ["$type", "bug"]},
+                                1,
+                                0,
+                            ]
+                        },
                     }
                 },
-                {"$sort": {"weight": 1}},
+                {"$sort": {"weight": 1, "issue_type": -1}},
             ]
         )
     )
