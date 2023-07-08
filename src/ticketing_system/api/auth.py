@@ -114,7 +114,7 @@ async def get_current_user(token: Annotated[str, Depends(JWTBearer())]):
 
 
 @router.get("/auth/discord")
-async def get_code_run_exchange(code: str, redirect_uri: str):
+async def get_code_run_exchange(code: str, redirect_uri: str, request: Request):
     redirect_url = urllib.parse.unquote(redirect_uri)
 
     data = {
@@ -122,10 +122,9 @@ async def get_code_run_exchange(code: str, redirect_uri: str):
         "client_secret": SECRET_KEY,
         "grant_type": "authorization_code",
         "code": code,
-        "redirect_uri": PROD_AUTH_REDIRECT
-        # "redirect_uri": "http://localhost:3000/api/auth/discord?redirect_uri=http://localhost:3000"
-        # if os.getenv("IS_DEV")
-        # else PROD_AUTH_REDIRECT,
+        "redirect_uri": f"{redirect_uri}/api/auth/discord?redirect_uri={redirect_uri}"
+        if os.getenv("IS_DEV")
+        else PROD_AUTH_REDIRECT,
     }
 
     headers = {"Content-Type": "application/x-www-form-urlencoded"}
