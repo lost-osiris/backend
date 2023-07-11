@@ -58,6 +58,24 @@ async def get_project(user: auth.UserDep, project_id):
         )
 
 
+@router.get("/project/{project_id}/projectinfo")
+async def get_project_members(project_id):
+    project = utils.prepare_json(db.projects.find_one({"_id": ObjectId(project_id)}))
+
+    discord_ids = [i["discord_id"] for i in project["members"]]
+    users = utils.prepare_json(db.users.find({"discord_id": {"$in": discord_ids}}))
+
+    project_info = {
+        "project_id": project_id,
+        "name": project["name"],
+        "version": project["version"],
+        "description": project["description"],
+        "members": users,
+        "member_count": len(project["members"]),
+    }
+    return project_info
+
+
 @router.put("/project/webhooks")
 async def create_project_webhook(user: auth.UserDep, request: Request):
     req_info = await request.json()
