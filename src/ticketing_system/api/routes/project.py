@@ -39,41 +39,49 @@ async def create_project(user: auth.UserDep, request: Request):
 
 
 @router.get("/projects")
-async def get_all_projects(user: auth.UserDep):
-    projects = list(db.projects.find())
-    return utils.prepare_json(projects)
+async def get_all_projects(user_auth: auth.UserDep):
+    user = user_auth["token"].user
+    projects = utils.prepare_json(
+        db.projects.find(
+            {
+                "$or": [
+                    {"is_public": True},
+                    {"members": {"$elemMatch": {"discord_id": user["discord_id"]}}},
+                ]
+            }
+        )
+    )
 
+    discord_ids = [j["discord_id"] for i in projects for j in i["members"]]
+    users = utils.prepare_json(db.users.find({"discord_id": {"$in": discord_ids}}))
 
-@router.get("/project/{project_id}")
-async def get_project(user: auth.UserDep, project_id):
-    project = db.projects.find_one({"_id": ObjectId(project_id)})
-
-    if project:
-        return utils.prepare_json(
+    output = []
+    for project in projects:
+        project_members = [i["discord_id"] for i in project["members"]]
+        members = [i for i in users if i["discord_id"] in project_members]
+        output.append(
             {
                 **project,
-                # TODO: use project id for fetching discord bot
-                # "webhooks": [i for i in db.webhooks.find({"name": project["name"]})],
+                "members": members,
+                "member_count": len(members),
             }
         )
 
+    return utils.prepare_json(output)
 
-@router.get("/project/{project_id}/projectinfo")
+
+@router.get("/project/{project_id}")
 async def get_project_members(project_id):
     project = utils.prepare_json(db.projects.find_one({"_id": ObjectId(project_id)}))
 
     discord_ids = [i["discord_id"] for i in project["members"]]
     users = utils.prepare_json(db.users.find({"discord_id": {"$in": discord_ids}}))
 
-    project_info = {
-        "project_id": project_id,
-        "name": project["name"],
-        "version": project["version"],
-        "description": project["description"],
+    return {
+        **project,
         "members": users,
         "member_count": len(project["members"]),
     }
-    return project_info
 
 
 @router.put("/project/webhooks")
@@ -254,40 +262,6 @@ async def update_waitlist(user: auth.UserDep, project_id: str, request: Request)
         webhooks.send_accept_waitlist(webhook_data)
 
     return req_info
-
-
-@router.get("/project/{project_id}/categories")
-async def get_categories(user: auth.UserDep, project_id: str):
-    project = db.projects.find_one({"_id": ObjectId(project_id)})
-
-    if not project:
-        raise HTTPException(
-            status_code=503,
-            detail=f"Unable to retrieve categories from database",
-        )
-
-    return utils.prepare_json(project["categories"])
-
-
-@router.put("/project/{project_id}}/categories")
-async def create_categories(user: auth.UserDep, request: Request, project_id: str):
-    req_info = await request.json()
-
-    project = db.project.find({"_id": ObjectId(project_id)})
-    if project:
-        for category in req_info:
-            db.projects.update_one(
-                {"_id": ObjectId(project_id)},
-                {"$push": {"categories": category.strip()}},
-            )
-    else:
-        raise HTTPException(
-            status_code=503,
-            detail=f"Unable write to database",
-        )
-
-
-### DELETE ###
 
 
 @router.get("/project/{project_id}/category/{category}/issues")
