@@ -130,6 +130,8 @@ async def update_issue(user: auth.UserDep, issue_id, request: Request):
 
     issue_info.pop("id")
 
+    if "issue_type" in issue_info:
+        del issue_info["issue_type"]
     issue = db.issues.find_one_and_update(
         {"_id": issue_id}, {"$set": issue_info}, upsert=False
     )

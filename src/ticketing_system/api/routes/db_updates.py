@@ -24,44 +24,9 @@ async def update_all_issues_to_include_project():
     return "done"
 
 
-@router.get("/update/issue/idtodiscordid")
-async def update_all_issues_to_discord_id():
-    db.issues.updateMany({}, {"$rename": {"playerData.id": "playerData.discord_id"}})
-
-
-@router.get("/update/addblacklistfield")
-async def update_all_users_to_include_ban_field():
-    db.users.update_many({}, {"$set": {"banned": False}})
-
-
 @router.get("/update/updateallissuestonewdata")
 async def update_all_issues_with_new_data():
-    names_and_ids = []
-    all_issues = utils.prepare_json(db.issues.find({}, {"modlogs": 0}))
-    for issue in all_issues:
-        if "playerData" in issue:
-            dict_to_push = {
-                "issue_id": issue["id"],
-                "discord_id": issue["playerData"]["id"],
-                "updatedAt": current_utc_time,
-            }
-
-            names_and_ids.append(dict_to_push)
-        else:
-            pass
-
-    for object in names_and_ids:
-        issue = utils.prepare_json(
-            db.issues.find_one_and_update(
-                {"_id": ObjectId(object["issue_id"])},
-                {
-                    "$unset": {"playerData": 1},
-                    "$set": {
-                        "discord_id": object["discord_id"],
-                        "updatedAt": object["updatedAt"],
-                    },
-                },
-            )
-        )
-
-    # return names_and_ids
+    db.issues.update_many({}, {"$rename": {"updatedAt": "date"}})
+    docs_without_dates = db.issues.find({"date": {"$exists": False}})
+    for doc in docs_without_dates:
+        db.issues.update_one({"_id": doc["_id"]}, {"$set": {"date": current_utc_time}})

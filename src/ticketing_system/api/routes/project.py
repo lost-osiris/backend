@@ -1,5 +1,6 @@
 from fastapi import APIRouter, Request, HTTPException
 from bson import ObjectId
+import bson
 from .. import utils
 from .. import auth
 from .. import webhooks
@@ -52,20 +53,38 @@ async def get_all_projects(user_auth: auth.UserDep):
         )
     )
 
+    for project in projects:
+        if any(
+            member["discord_id"] == user["discord_id"] for member in project["members"]
+        ):
+            project["is_member"] = True
+        else:
+            project["is_member"] = False
+
     discord_ids = [j["discord_id"] for i in projects for j in i["members"]]
     users = utils.prepare_json(db.users.find({"discord_id": {"$in": discord_ids}}))
 
-    output = []
+    output = {"public_projects": [], "user_projects": []}
+
     for project in projects:
         project_members = [i["discord_id"] for i in project["members"]]
         members = [i for i in users if i["discord_id"] in project_members]
-        output.append(
-            {
-                **project,
-                "members": members,
-                "member_count": len(members),
-            }
-        )
+        if project["is_member"] == True:
+            output["user_projects"].append(
+                {
+                    **project,
+                    "members": members,
+                    "member_count": len(members),
+                }
+            )
+        else:
+            output["public_projects"].append(
+                {
+                    **project,
+                    "members": members,
+                    "member_count": len(members),
+                }
+            )
 
     return utils.prepare_json(output)
 
@@ -82,38 +101,6 @@ async def get_project_members(project_id):
         "members": users,
         "member_count": len(project["members"]),
     }
-
-
-@router.put("/project/webhooks")
-async def create_project_webhook(user: auth.UserDep, request: Request):
-    req_info = await request.json()
-    proj_name = req_info["project_name"]
-    time.sleep(0.5)
-
-    find_project = db.projects.find_one({"name": proj_name})
-
-    if find_project and db.webhooks.find_one({"url": req_info}):
-        raise HTTPException(status_code=403, detail="webhook already exists")
-    elif find_project and not db.webhooks.find_one({"url": req_info}):
-        try:
-            new_webhook = db.webhooks.insert_one(req_info)
-        except:
-            print(traceback.format_exc())
-            raise HTTPException(
-                status_code=503, detail="Unable write issue to database"
-            )
-
-    elif not find_project:
-        raise HTTPException(
-            status_code=404,
-            detail=f"Project not found, cannot write to database",
-        )
-
-    else:
-        raise HTTPException(
-            status_code=503,
-            detail=f"Unable write webhook for channel to database",
-        )
 
 
 @router.get("/project/{project_id}/waitlist")
@@ -160,10 +147,10 @@ async def join_waitlist(user_auth: auth.UserDep, project_id: str, request: Reque
                 "username": user["username"],
                 "avatar": user["avatar"],
             }
-            db.projects.update_one(
-                {"_id": ObjectId(project_id)},
-                {"$push": {"waitlist": insert_info}},
-            )
+            # db.projects.update_one(
+            #     {"_id": ObjectId(project_id)},
+            #     {"$push": {"waitlist": insert_info}},
+            # )
             webhooks.send_join_waitlist(user)
             return req_info
 
@@ -171,36 +158,36 @@ async def join_waitlist(user_auth: auth.UserDep, project_id: str, request: Reque
 ### PUT ###
 
 
-@router.put("/project/webhooks")
-async def create_project_webhook(user: auth.UserDep, request: Request):
-    req_info = await request.json()
-    proj_name = req_info["project_name"]
-    time.sleep(0.5)
+# @router.put("/project/webhooks")
+# async def create_project_webhook(user: auth.UserDep, request: Request):
+#     req_info = await request.json()
+#     proj_name = req_info["project_name"]
+#     time.sleep(0.5)
 
-    find_project = db.projects.find_one({"name": proj_name})
+#     find_project = db.projects.find_one({"name": proj_name})
 
-    if find_project and db.webhooks.find_one({"url": req_info}):
-        raise HTTPException(status_code=403, detail="webhook already exists")
-    elif find_project and not db.webhooks.find_one({"url": req_info}):
-        try:
-            new_webhook = db.webhooks.insert_one(req_info)
-        except:
-            print(traceback.format_exc())
-            raise HTTPException(
-                status_code=503, detail="Unable write issue to database"
-            )
+#     if find_project and db.webhooks.find_one({"url": req_info}):
+#         raise HTTPException(status_code=403, detail="webhook already exists")
+#     elif find_project and not db.webhooks.find_one({"url": req_info}):
+#         try:
+#             new_webhook = db.webhooks.insert_one(req_info)
+#         except:
+#             print(traceback.format_exc())
+#             raise HTTPException(
+#                 status_code=503, detail="Unable write issue to database"
+#             )
 
-    elif not find_project:
-        raise HTTPException(
-            status_code=404,
-            detail=f"Project not found, cannot write to database",
-        )
+#     elif not find_project:
+#         raise HTTPException(
+#             status_code=404,
+#             detail=f"Project not found, cannot write to database",
+#         )
 
-    else:
-        raise HTTPException(
-            status_code=503,
-            detail=f"Unable write webhook for channel to database",
-        )
+#     else:
+#         raise HTTPException(
+#             status_code=503,
+#             detail=f"Unable write webhook for channel to database",
+#         )
 
 
 @router.put("/project/{project_id}/members/updatewaitlist")
