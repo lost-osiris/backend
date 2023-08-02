@@ -7,7 +7,7 @@ import os
 ENV = f".{os.getenv('ENV')}" or ""
 load_dotenv(f".env{ENV}")
 
-from .routes import issue, project, user, db_updates, issue_comments, cron_jobs
+from .routes import issue, project, user, db_updates, issue_comments, cron_jobs, blogs
 from . import auth
 
 app = FastAPI()
@@ -21,3 +21,4 @@ app.include_router(project.router)
 app.include_router(user.router)
 app.include_router(db_updates.router)
 app.include_router(cron_jobs.router)
+app.include_router(blogs.router)
