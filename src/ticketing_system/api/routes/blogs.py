@@ -3,7 +3,7 @@ from .. import auth
 from .. import utils
 from bson import ObjectId
 
-from datetime import datetime, timedelta
+from datetime import datetime
 
 router = APIRouter(prefix="/api")
 db = utils.get_db_client()
@@ -28,7 +28,7 @@ async def get_all_blogs():
 
 @router.post("/blogs/createblog")
 async def create_blog(user: auth.UserDep, request: Request):
-    current_time = datetime.now()
+    current_time = datetime.utcnow()
     req_info = await request.json()
     user = user["token"].user
 

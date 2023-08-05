@@ -171,7 +171,7 @@ def send_deleted_issue(issue, user_info):
         webhook_issues.send(embed=embed)
 
 
-def send_join_waitlist(user_info):
+def send_join_waitlist(user_info, project_name):
     color = Color.blurple()
     discord_id = user_info["discord_id"]
     discord_name = user_info["username"]
@@ -179,22 +179,17 @@ def send_join_waitlist(user_info):
 
     embed = discord.Embed(
         color=color,
-        title=f"{discord_name} has requested to join Pale Court",
+        title=f"{discord_name} has requested to join {project_name}",
     )
 
     embed.set_thumbnail(
         url=f"https://cdn.discordapp.com/avatars/{discord_id}/{discord_avatar_id}.png",
     )
     if not os.getenv("WEBHOOK_DISABLED"):
-        webhook_waitlist.send(
-            embed=embed,
-            view=discord_button_view(
-                discord.ButtonStyle.green, "asdfasd", "google.com"
-            ),
-        )
+        webhook_waitlist.send(embed=embed)
 
 
-def send_accept_waitlist(user_info):
+def send_accept_waitlist(user_info, project_name):
     color = Color.green()
     discord_id = user_info["discord_id"]
     discord_name = user_info["username"]
@@ -202,7 +197,7 @@ def send_accept_waitlist(user_info):
 
     embed = discord.Embed(
         color=color,
-        title=f"{discord_name} has been accepted into Pale Court as a {user_info['role']}",
+        title=f"{discord_name} has been accepted into {project_name} as a {user_info['role']}",
     )
 
     embed.set_thumbnail(
@@ -213,14 +208,14 @@ def send_accept_waitlist(user_info):
         webhook_waitlist.send(embed=embed)
 
 
-def send_reject_waitlist(user_info):
+def send_reject_waitlist(user_info, project_name):
     color = Color.red()
     discord_id = user_info["discord_id"]
     discord_name = user_info["username"]
     discord_avatar_id = user_info["avatar"]
 
     embed = discord.Embed(
-        color=color, title=f"{discord_name} was rejected from joining Pale Court"
+        color=color, title=f"{discord_name} was rejected from joining {project_name}"
     )
     embed.set_thumbnail(
         url=f"https://cdn.discordapp.com/avatars/{discord_id}/{discord_avatar_id}.png",
