@@ -15,27 +15,19 @@ IGNORED_UPDATE_EVENT_KEYS = [
     "summary",
     "date",
 ]
-webhook_issues = discord.SyncWebhook.from_url(os.getenv("WEBHOOK_ISSUES"))
-webhook_waitlist = discord.SyncWebhook.from_url(os.getenv("WEBHOOK_WAITLIST"))
-webhook_comments = discord.SyncWebhook.from_url(os.getenv("WEBHOOK_COMMENTS"))
-
-# webhook = discord.SyncWebhook.from_url(
-#     "https://discordapp.com/api/webhooks/1075674946715525120/uHhuAUGWxX3-QfipUTapVmmHK0Ch9L31r0zkpqB7zj8xhTvH5y2kuAb7XZUtxmlEtg-3",
-# )
 
 
-def discord_button_view(style, label, url):
-    view = discord.ui.View()
-    button = discord.ui.Button(style=style, label=label, url=url)
-    view.add_item(item=button)
-    return view
+def webhook(url):
+    return discord.SyncWebhook.from_url(url)
 
 
 def create_embed(message, color, title):
     return discord.Embed(title=title, description=message, color=color)
 
 
-def send_new_issue(issue):
+def send_new_issue(issue, webhook_url):
+    webhook_issues = discord.SyncWebhook.from_url(webhook_url["issue"])
+
     description = f"[click here to see issue in website](https://modforge.gg/issue/{issue['_id']})"
     discord_id = issue["playerData"]["discord_id"]
     discord_name = issue["playerData"]["username"]
@@ -66,7 +58,9 @@ def send_new_issue(issue):
         webhook_issues.send(embed=embed)
 
 
-def send_update_issue(diff, issue, user_info):
+def send_update_issue(diff, issue, user_info, webhook_url):
+    webhook_issues = discord.SyncWebhook.from_url(webhook_url["issue"])
+
     summary_for_title = utils.to_title_case(issue["category"])
     description = f"[{issue['summary']}](https://modforge.gg/issue/{issue['_id']})"
     ignored_update_list = []
@@ -143,7 +137,9 @@ def send_update_issue(diff, issue, user_info):
             webhook_issues.send(embed=embed)
 
 
-def send_deleted_issue(issue, user_info):
+def send_deleted_issue(issue, user_info, webhook_url):
+    webhook_issues = discord.SyncWebhook.from_url(webhook_url["issue"])
+
     discord_id = user_info["discord_id"]
     discord_name = user_info["username"]
     author_name = issue["playerData"]["username"]
@@ -171,7 +167,9 @@ def send_deleted_issue(issue, user_info):
         webhook_issues.send(embed=embed)
 
 
-def send_join_waitlist(user_info, project_name):
+def send_join_waitlist(user_info, project_name, webhook_url):
+    webhook_waitlist = discord.SyncWebhook.from_url(webhook_url["waitlist"])
+
     color = Color.blurple()
     discord_id = user_info["discord_id"]
     discord_name = user_info["username"]
@@ -189,7 +187,9 @@ def send_join_waitlist(user_info, project_name):
         webhook_waitlist.send(embed=embed)
 
 
-def send_accept_waitlist(user_info, project_name):
+def send_accept_waitlist(user_info, project_name, webhook_url):
+    webhook_waitlist = discord.SyncWebhook.from_url(webhook_url["waitlist"])
+
     color = Color.green()
     discord_id = user_info["discord_id"]
     discord_name = user_info["username"]
@@ -208,7 +208,9 @@ def send_accept_waitlist(user_info, project_name):
         webhook_waitlist.send(embed=embed)
 
 
-def send_reject_waitlist(user_info, project_name):
+def send_reject_waitlist(user_info, project_name, webhook_url):
+    webhook_waitlist = discord.SyncWebhook.from_url(webhook_url["waitlist"])
+
     color = Color.red()
     discord_id = user_info["discord_id"]
     discord_name = user_info["username"]
@@ -225,7 +227,9 @@ def send_reject_waitlist(user_info, project_name):
         webhook_waitlist.send(embed=embed)
 
 
-def send_created_comment(info):
+def send_created_comment(info, webhook_url):
+    webhook_comments = discord.SyncWebhook.from_url(webhook_url["comment"])
+
     color = Color.green()
     discord_id = info["discord_id"]
     discord_name = info["username"]
@@ -306,7 +310,9 @@ def send_cron_delete_warning(info, discord_timestamp, category_list):
             webhook_issues.send(embed=current_embed)
 
 
-def send_cron_delete_success(amount):
+def send_cron_delete_success(amount, webhook_url):
+    webhook_issues = discord.SyncWebhook.from_url(webhook_url["issues"])
+
     color = Color.green()
 
     embed = discord.Embed(
@@ -315,4 +321,4 @@ def send_cron_delete_success(amount):
         description=f"{amount} issues were Archived over 30 days, and have been deleted as a result.",
     )
     if not os.getenv("WEBHOOK_DISABLED"):
-        webhook_comments.send(embed=embed)
+        webhook_issues.send(embed=embed)

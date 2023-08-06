@@ -34,7 +34,15 @@ async def create_issue_comments(
         )
         get_issue = utils.prepare_json(
             db.issues.find_one(
-                {"_id": ObjectId(issue_id)}, {"category": 1, "summary": 1}
+                {"_id": ObjectId(issue_id)},
+                {"category": 1, "summary": 1, "project_id": 1},
+            )
+        )
+
+        find_project = utils.prepare_json(
+            db.projects.find_one(
+                {"_id": ObjectId(get_issue["project_id"])},
+                {"name": 1, "webhooks": 1},
             )
         )
 
@@ -47,7 +55,8 @@ async def create_issue_comments(
             "username": user_auth["username"],
         }
 
-        webhooks.send_created_comment(passing_info)
+        if "webhooks" in find_project:
+            webhooks.send_created_comment(passing_info, find_project["webhooks"])
 
     except:
         print(traceback.format_exc())
