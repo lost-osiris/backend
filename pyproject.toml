@@ -14,7 +14,7 @@ python-dotenv = "^0.21.1"
 requests = "^2.28.2"
 # bson = "^0.5.10"
 black = "^23.3.0"
-pymongo = "^4.3.3"
+pymongo = "^4.4.0"
 python-jose = {extras = ["cryptography"], version = "^3.3.0"}
 
 

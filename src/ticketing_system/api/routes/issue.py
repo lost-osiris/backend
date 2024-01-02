@@ -64,7 +64,6 @@ async def get_one(user: auth.UserDep, issue_id):
 @router.post("/issue")
 async def create_issue(user_auth: auth.UserDep, request: Request):
     req_info = await request.json()
-    req_info["category"] = req_info["category"].lower()
 
     user_projects = [
         i
@@ -85,14 +84,29 @@ async def create_issue(user_auth: auth.UserDep, request: Request):
         )
 
     try:
+        req_info["category"] = req_info["category"].lower()
+        if "assignments" in req_info and req_info["assignments"]:
+            if not req_info["assignments"][0]["user"]:
+                del req_info["assignments"]
+            else:
+                kept_fields = ["discord_id", "avatar", "username"]
+                for assignment in req_info["assignments"]:
+                    filtered_user_info = {
+                        k: v for k, v in assignment["user"].items() if k in kept_fields
+                    }
+                    assignment["user"] = filtered_user_info
+
         req_info["project_id"] = ObjectId(req_info["project_id"])
         issue = db.issues.insert_one(req_info)
     except:
         print(traceback.format_exc())
         raise HTTPException(status_code=503, detail="Unable write issue to database")
 
-    req_info["playerData"] = user_auth["token"].user
-
+    req_info["playerData"] = {
+        "discord_id": user_auth["token"].user["discord_id"],
+        "avatar": user_auth["token"].user["avatar"],
+        "username": user_auth["token"].user["username"],
+    }
     webhooks.send_new_issue(req_info)
 
     return utils.prepare_json(issue.inserted_id)

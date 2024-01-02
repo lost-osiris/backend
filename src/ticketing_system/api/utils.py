@@ -23,8 +23,6 @@ def alphanumeric_check(data):
 def _json_ready(data):
     if isinstance(data, ObjectId):
         return str(data)
-    # elif instance(data, datetime.datetime):
-    #     return str(data)
     else:
         return data
 
@@ -44,7 +42,6 @@ def prepare_json(data):
                 output[key] = prepare_json(v)
             else:
                 output[key] = _json_ready(v)
-
         return output
 
     elif isinstance(data, list) or isinstance(data, set):
@@ -58,7 +55,6 @@ def prepare_json(data):
                 output.append(prepare_json(value))
             else:
                 output.append(_json_ready(value))
-
         return output
     else:
         return _json_ready(data)

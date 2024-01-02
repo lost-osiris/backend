@@ -37,6 +37,7 @@ def create_embed(message, color, title):
 
 def send_new_issue(issue):
     description = f"[click here to see issue in website](https://modforge.gg/issue/{issue['_id']})"
+
     discord_id = issue["playerData"]["discord_id"]
     discord_name = issue["playerData"]["username"]
     discord_avatar_id = issue["playerData"]["avatar"]
@@ -56,13 +57,45 @@ def send_new_issue(issue):
     embed.add_field(name="Type", value=issue["type"], inline=False)
     embed.add_field(name="Category", value=category, inline=True)
     embed.add_field(name="Version", value=issue["version"], inline=True)
+    if "assignments" in issue and issue["assignments"]:
+        if issue["pingOnCreate"]:
+            assignments_info = "\n".join(
+                [
+                    f"**<@{assignment['user']['discord_id']}>**"
+                    + (f" | {assignment['task']}" if assignment["task"] else "")
+                    for assignment in issue["assignments"]
+                ]
+            )
+            embed.add_field(name="Assignments", value=assignments_info, inline=False)
 
+        else:
+            assignments_info = "\n".join(
+                [
+                    f"**{assignment['user']['username']}**"
+                    + (f" | {assignment['task']}" if assignment["task"] else "")
+                    for assignment in issue["assignments"]
+                ]
+            )
+            embed.add_field(name="Assignments", value=assignments_info, inline=False)
     embed.set_author(
         name=discord_name,
         icon_url=f"https://cdn.discordapp.com/avatars/{discord_id}/{discord_avatar_id}.png",
     )
 
-    if not os.getenv("WEBHOOK_DISABLED"):
+    # if not os.getenv("WEBHOOK_DISABLED"):
+    if "assignments" in issue and issue["assignments"]:
+        if issue["pingOnCreate"]:
+            all_users = "\n".join(
+                [
+                    f"<@{assignment['user']['discord_id']}>"
+                    for assignment in issue["assignments"]
+                ]
+            )
+            webhook_issues.send(content=all_users)
+            webhook_issues.send(embed=embed)
+        else:
+            webhook_issues.send(embed=embed)
+    else:
         webhook_issues.send(embed=embed)
 
 

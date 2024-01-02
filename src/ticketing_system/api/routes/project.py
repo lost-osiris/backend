@@ -265,6 +265,8 @@ async def get_all_by_category(user: auth.UserDep, project_id: str, category: str
                 {
                     "$project": {
                         "priority": 1,
+                        "assignments": 1,
+                        "pingOnCreate": 1,
                         "status": 1,
                         "category": 1,
                         "discord_id": 1,
