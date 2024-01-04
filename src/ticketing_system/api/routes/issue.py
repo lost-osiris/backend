@@ -64,6 +64,9 @@ async def get_one(user: auth.UserDep, issue_id):
 @router.post("/issue")
 async def create_issue(user_auth: auth.UserDep, request: Request):
     req_info = await request.json()
+    project = utils.prepare_json(
+        db.projects.find_one({"_id": ObjectId(req_info["project_id"])})
+    )
 
     user_projects = [
         i
@@ -107,7 +110,7 @@ async def create_issue(user_auth: auth.UserDep, request: Request):
         "avatar": user_auth["token"].user["avatar"],
         "username": user_auth["token"].user["username"],
     }
-    webhooks.send_new_issue(req_info)
+    webhooks.send_new_issue(req_info, project["webhooks"]["issue"])
 
     return utils.prepare_json(issue.inserted_id)
 
@@ -120,6 +123,9 @@ async def update_issue_assignments(user: auth.UserDep, issue_id, request: Reques
     req_info = await request.json()
     issue_id = ObjectId(issue_id)
     issue = utils.prepare_json(db.issues.find_one({"_id": issue_id}))
+    project = utils.prepare_json(
+        db.projects.find_one({"_id": ObjectId(issue["project_id"])})
+    )
 
     user_projects = [
         i for i in user["token"].user["projects"] if i["id"] == issue["project_id"]
@@ -167,7 +173,10 @@ async def update_issue_assignments(user: auth.UserDep, issue_id, request: Reques
             )
             if updated_assignment["changes"]["completed"]["new_value"]:
                 webhooks.send_completed_assignment(
-                    updated_assignment, issue, user["token"].user
+                    updated_assignment,
+                    issue,
+                    user["token"].user,
+                    project["webhooks"]["issue"],
                 )
         except:
             print(traceback.format_exc())
@@ -181,6 +190,9 @@ async def update_issue(user: auth.UserDep, issue_id, request: Request):
     req_info = await request.json()
     issue_id = ObjectId(issue_id)
     issue = utils.prepare_json(db.issues.find_one({"_id": issue_id}))
+    project = utils.prepare_json(
+        db.projects.find_one({"_id": ObjectId(issue["project_id"])})
+    )
 
     user_projects = [
         i for i in user["token"].user["projects"] if i["id"] == issue["project_id"]
@@ -227,7 +239,7 @@ async def update_issue(user: auth.UserDep, issue_id, request: Request):
     )
 
     if len(diff) > 0:
-        webhooks.send_update_issue(diff, issue, user_info)
+        webhooks.send_update_issue(diff, issue, user_info, project["webhooks"]["issue"])
 
         return utils.prepare_json(issue)
 
@@ -240,6 +252,11 @@ async def delete_issue(user_auth: auth.UserDep, issue_id):
     issue["playerData"] = utils.prepare_json(
         db.users.find_one({"discord_id": issue["discord_id"]})
     )
+
+    project = utils.prepare_json(
+        db.projects.find_one({"_id": ObjectId(issue["project_id"])})
+    )
+    webhook_url = project["webhooks"]["issue"]
 
     user_projects = [i for i in user["projects"] if "maintainer" in i["roles"]]
 
@@ -254,7 +271,7 @@ async def delete_issue(user_auth: auth.UserDep, issue_id):
 
     if has_permissions or user["discord_id"] == issue["discord_id"]:
         db.issues.find_one_and_delete({"_id": ObjectId(issue_id)})
-        webhooks.send_deleted_issue(issue, user)
+        webhooks.send_deleted_issue(issue, user, webhook_url)
 
     elif user["discord_id"] != issue["discord_id"]:
         if not has_permissions:

@@ -34,8 +34,12 @@ async def create_issue_comments(
         )
         get_issue = utils.prepare_json(
             db.issues.find_one(
-                {"_id": ObjectId(issue_id)}, {"category": 1, "summary": 1}
+                {"_id": ObjectId(issue_id)},
+                {"category": 1, "summary": 1, "project_id": 1},
             )
+        )
+        project = utils.prepare_json(
+            db.projects.find_one({"_id": ObjectId(get_issue["project_id"])})
         )
 
         passing_info = {
@@ -47,7 +51,7 @@ async def create_issue_comments(
             "username": user_auth["username"],
         }
 
-        webhooks.send_created_comment(passing_info)
+        webhooks.send_created_comment(passing_info, project["webhooks"]["comment"])
 
     except:
         print(traceback.format_exc())

@@ -29,7 +29,7 @@ PROD_AUTH_REDIRECT = (
     "https://modforge.gg/api/auth/discord?redirect_uri=https://modforge.gg"
 )
 ALGORITHM = "HS256"
-ACCESS_TOKEN_EXPIRE_MINUTES = 720
+ACCESS_TOKEN_EXPIRE_MINUTES = 7200
 
 oauth2_scheme = HTTPBearer()
 
