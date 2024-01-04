@@ -110,7 +110,9 @@ async def create_issue(user_auth: auth.UserDep, request: Request):
         "avatar": user_auth["token"].user["avatar"],
         "username": user_auth["token"].user["username"],
     }
-    webhooks.send_new_issue(req_info, project["webhooks"]["issue"])
+    webhooks.send_new_issue(
+        req_info, project["webhooks"]["issue"], req_info["project_id"]
+    )
 
     return utils.prepare_json(issue.inserted_id)
 
@@ -177,6 +179,7 @@ async def update_issue_assignments(user: auth.UserDep, issue_id, request: Reques
                     issue,
                     user["token"].user,
                     project["webhooks"]["issue"],
+                    issue["project_id"],
                 )
         except:
             print(traceback.format_exc())
@@ -239,7 +242,9 @@ async def update_issue(user: auth.UserDep, issue_id, request: Request):
     )
 
     if len(diff) > 0:
-        webhooks.send_update_issue(diff, issue, user_info, project["webhooks"]["issue"])
+        webhooks.send_update_issue(
+            diff, issue, user_info, project["webhooks"]["issue"], issue["project_id"]
+        )
 
         return utils.prepare_json(issue)
 

@@ -35,9 +35,9 @@ def create_embed(message, color, title):
     return discord.Embed(title=title, description=message, color=color)
 
 
-def send_new_issue(issue, webhook_url):
+def send_new_issue(issue, webhook_url, project_id):
     webhook_issues = discord.SyncWebhook.from_url(webhook_url)
-    description = f"[click here to see issue in website](https://modforge.gg/issue/{issue['_id']})"
+    description = f"[click here to see issue in website](https://modforge.gg/project/{project_id}/issue/{issue['_id']})"
 
     discord_id = issue["playerData"]["discord_id"]
     discord_name = issue["playerData"]["username"]
@@ -100,7 +100,7 @@ def send_new_issue(issue, webhook_url):
             webhook_issues.send(embed=embed)
 
 
-def send_completed_assignment(diff, issue, user_info, webhook_url):
+def send_completed_assignment(diff, issue, user_info, webhook_url, project_id):
     webhook_issues = discord.SyncWebhook.from_url(webhook_url)
     color = Color.green()
     index = diff["index"]
@@ -114,18 +114,18 @@ def send_completed_assignment(diff, issue, user_info, webhook_url):
 
     title = ""
     issue_id = issue["id"]
-    description = f"[{issue['summary']}](https://modforge.gg/issue/{issue_id})"
+    description = f"[{issue['summary']}](https://modforge.gg/project/{project_id}/issue/{issue_id})"
 
     if discord_id == assignment_user_id:
         if issue["assignments"][index]["task"]:
             title = f"{discord_name} has completed their assignment \n"
-            description = f"{issue['assignments'][index]['task']} \n[{issue['summary']}](https://modforge.gg/issue/{issue_id})"
+            description = f"{issue['assignments'][index]['task']} \n[{issue['summary']}](https://modforge.gg/project/{project_id}/issue/{issue_id})"
         else:
             title = f"{discord_name} has completed their assignment"
     else:
         if issue["assignments"][index]["task"]:
             title = f"{discord_name} has marked {assignment_user_name}'s assignment as complete"
-            description = f"{issue['assignments'][index]['task']} \n[{issue['summary']}](https://modforge.gg/issue/{issue_id})"
+            description = f"{issue['assignments'][index]['task']} \n[{issue['summary']}](https://modforge.gg/project/{project_id}/issue/{issue_id})"
         else:
             title = f"{discord_name} has marked {assignment_user_name}'s assignment as complete"
 
@@ -143,10 +143,10 @@ def send_completed_assignment(diff, issue, user_info, webhook_url):
     webhook_issues.send(embed=embed)
 
 
-def send_update_issue(diff, issue, user_info, webhook_url):
+def send_update_issue(diff, issue, user_info, webhook_url, project_id):
     webhook_issues = discord.SyncWebhook.from_url(webhook_url)
     summary_for_title = utils.to_title_case(issue["category"])
-    description = f"[{issue['summary']}](https://modforge.gg/issue/{issue['_id']})"
+    description = f"[{issue['summary']}](https://modforge.gg/project/{project_id}/issue/{issue['_id']})"
     ignored_update_list = []
     message_list = []
     discord_id = user_info["discord_id"]
@@ -251,7 +251,7 @@ def send_deleted_issue(issue, user_info, webhook_url):
         webhook_issues.send(embed=embed)
 
 
-def send_created_comment(info, webhook_url):
+def send_created_comment(info, webhook_url, project_id):
     webhook_comments = discord.SyncWebhook.from_url(webhook_url)
     color = Color.green()
     discord_id = info["discord_id"]
@@ -259,7 +259,7 @@ def send_created_comment(info, webhook_url):
     discord_avatar_id = info["avatar"]
     category = info["category"]
     issue_id = info["issue_id"]
-    description = f"[{info['summary']}](https://modforge.gg/issue/{issue_id})"
+    description = f"[{info['summary']}](https://modforge.gg/project/{project_id}/issue/{issue_id})"
 
     embed = discord.Embed(
         color=color,

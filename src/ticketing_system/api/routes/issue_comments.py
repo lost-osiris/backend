@@ -51,7 +51,9 @@ async def create_issue_comments(
             "username": user_auth["username"],
         }
 
-        webhooks.send_created_comment(passing_info, project["webhooks"]["comment"])
+        webhooks.send_created_comment(
+            passing_info, project["webhooks"]["comment"], get_issue["project_id"]
+        )
 
     except:
         print(traceback.format_exc())
