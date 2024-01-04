@@ -82,21 +82,63 @@ def send_new_issue(issue):
         icon_url=f"https://cdn.discordapp.com/avatars/{discord_id}/{discord_avatar_id}.png",
     )
 
-    # if not os.getenv("WEBHOOK_DISABLED"):
-    if "assignments" in issue and issue["assignments"]:
-        if issue["pingOnCreate"]:
-            all_users = "\n".join(
-                [
-                    f"<@{assignment['user']['discord_id']}>"
-                    for assignment in issue["assignments"]
-                ]
-            )
-            webhook_issues.send(content=all_users)
-            webhook_issues.send(embed=embed)
+    if not os.getenv("WEBHOOK_DISABLED"):
+        if "assignments" in issue and issue["assignments"]:
+            if issue["pingOnCreate"]:
+                all_users = "\n".join(
+                    [
+                        f"<@{assignment['user']['discord_id']}>"
+                        for assignment in issue["assignments"]
+                    ]
+                )
+                webhook_issues.send(content=all_users)
+                webhook_issues.send(embed=embed)
+            else:
+                webhook_issues.send(embed=embed)
         else:
             webhook_issues.send(embed=embed)
+
+
+def send_completed_assignment(diff, issue, user_info):
+    color = Color.green()
+    index = diff["index"]
+    discord_id = user_info["discord_id"]
+    discord_name = user_info["username"]
+    discord_avatar_id = user_info["avatar"]
+
+    assignment_user_id = issue["assignments"][index]["user"]["discord_id"]
+    assignment_user_name = issue["assignments"][index]["user"]["username"]
+    assignment_user_avatar = issue["assignments"][index]["user"]["avatar"]
+
+    title = ""
+    issue_id = issue["id"]
+    description = f"[{issue['summary']}](https://modforge.gg/issue/{issue_id})"
+
+    if discord_id == assignment_user_id:
+        if issue["assignments"][index]["task"]:
+            title = f"{discord_name} has completed their assignment \n"
+            description = f"{issue['assignments'][index]['task']} \n[{issue['summary']}](https://modforge.gg/issue/{issue_id})"
+        else:
+            title = f"{discord_name} has completed their assignment"
     else:
-        webhook_issues.send(embed=embed)
+        if issue["assignments"][index]["task"]:
+            title = f"{discord_name} has marked {assignment_user_name}'s assignment as complete"
+            description = f"{issue['assignments'][index]['task']} \n[{issue['summary']}](https://modforge.gg/issue/{issue_id})"
+        else:
+            title = f"{discord_name} has marked {assignment_user_name}'s assignment as complete"
+
+    embed = discord.Embed(
+        color=color,
+        title=title,
+        description=description,
+    )
+
+    embed.set_thumbnail(
+        url=f"https://cdn.discordapp.com/avatars/{discord_id}/{discord_avatar_id}.png",
+    )
+
+    # if not os.getenv("WEBHOOK_DISABLED"):
+    webhook_issues.send(embed=embed)
 
 
 def send_update_issue(diff, issue, user_info):
@@ -202,65 +244,6 @@ def send_deleted_issue(issue, user_info):
     )
     if not os.getenv("WEBHOOK_DISABLED"):
         webhook_issues.send(embed=embed)
-
-
-def send_join_waitlist(user_info):
-    color = Color.blurple()
-    discord_id = user_info["discord_id"]
-    discord_name = user_info["username"]
-    discord_avatar_id = user_info["avatar"]
-
-    embed = discord.Embed(
-        color=color,
-        title=f"{discord_name} has requested to join Pale Court",
-    )
-
-    embed.set_thumbnail(
-        url=f"https://cdn.discordapp.com/avatars/{discord_id}/{discord_avatar_id}.png",
-    )
-    if not os.getenv("WEBHOOK_DISABLED"):
-        webhook_waitlist.send(
-            embed=embed,
-            view=discord_button_view(
-                discord.ButtonStyle.green, "asdfasd", "google.com"
-            ),
-        )
-
-
-def send_accept_waitlist(user_info):
-    color = Color.green()
-    discord_id = user_info["discord_id"]
-    discord_name = user_info["username"]
-    discord_avatar_id = user_info["avatar"]
-
-    embed = discord.Embed(
-        color=color,
-        title=f"{discord_name} has been accepted into Pale Court as a {user_info['role']}",
-    )
-
-    embed.set_thumbnail(
-        url=f"https://cdn.discordapp.com/avatars/{discord_id}/{discord_avatar_id}.png",
-    )
-
-    if not os.getenv("WEBHOOK_DISABLED"):
-        webhook_waitlist.send(embed=embed)
-
-
-def send_reject_waitlist(user_info):
-    color = Color.red()
-    discord_id = user_info["discord_id"]
-    discord_name = user_info["username"]
-    discord_avatar_id = user_info["avatar"]
-
-    embed = discord.Embed(
-        color=color, title=f"{discord_name} was rejected from joining Pale Court"
-    )
-    embed.set_thumbnail(
-        url=f"https://cdn.discordapp.com/avatars/{discord_id}/{discord_avatar_id}.png",
-    )
-
-    if not os.getenv("WEBHOOK_DISABLED"):
-        webhook_waitlist.send(embed=embed)
 
 
 def send_created_comment(info):

@@ -71,7 +71,6 @@ async def update_issue_comments(
 
     if user["discord_id"] == old_comment["discord_id"]:
         try:
-            print(comment.dict())
             db.issue_comments.find_one_and_update(
                 {"_id": ObjectId(comment_id)},
                 {

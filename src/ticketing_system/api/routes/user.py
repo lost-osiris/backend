@@ -58,25 +58,3 @@ async def find_all_users():
         {}, {"discord_id": 1, "avatar": 1, "username": 1, "_id": 0}
     )
     return utils.prepare_json(all_users)
-
-
-@router.put("/user/addtoproject")
-async def add_user_to_project(user_auth: auth.UserDep, request: Request):
-    req_info = await request.json()
-    print(req_info)
-
-    # elif find_user and not db.users.find_one(
-    #     {"user_id": req_info["user_id"], "projects": req_info["projects"]}
-    # ):
-    #     db.projects.update_one(
-    #         {"user_id": req_info["user_id"]},
-    #         {"$push": {"projects": req_info["projects"]}},
-    #     )
-    #     print("found user but didn't find the project, so we update with the project")
-
-    # elif find_user and db.users.find_one(
-    #     {"user_id": req_info["user_id"], "projects": req_info["projects"]}
-    # ):
-    #     print(
-    #         "found the user and it's a part of the project we are looking for, so we reject"
-    #     )

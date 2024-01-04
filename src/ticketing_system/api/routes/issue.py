@@ -115,7 +115,68 @@ async def create_issue(user_auth: auth.UserDep, request: Request):
 ### PUT ###
 
 
-@router.put("/issue/{issue_id}")
+@router.put("/project/{project_id}/issue/{issue_id}/updateassignments")
+async def update_issue_assignments(user: auth.UserDep, issue_id, request: Request):
+    req_info = await request.json()
+    issue_id = ObjectId(issue_id)
+    issue = utils.prepare_json(db.issues.find_one({"_id": issue_id}))
+
+    user_projects = [
+        i for i in user["token"].user["projects"] if i["id"] == issue["project_id"]
+    ]
+    has_permissions = [i for i in user_projects if "maintainer" in i["roles"]]
+
+    if user["discord_id"] != issue["discord_id"] and not has_permissions:
+        assignment_discord_ids = [
+            assignment["user"]["discord_id"] for assignment in issue["assignments"]
+        ]
+
+        if user["discord_id"] not in assignment_discord_ids:
+            raise HTTPException(
+                status_code=403,
+                detail="User does not have permissions to perform update on issue.",
+            )
+
+    updated_assignment = None
+
+    for index, (existing_assignment, new_assignment) in enumerate(
+        zip(issue["assignments"], req_info["assignments"])
+    ):
+        if new_assignment["completed"] != existing_assignment["completed"]:
+            updated_assignment = {
+                "index": index,
+                "changes": {
+                    "completed": {
+                        "old_value": existing_assignment["completed"],
+                        "new_value": new_assignment["completed"],
+                    }
+                },
+            }
+            break
+
+    if updated_assignment:
+        issue["project_id"] = ObjectId(issue["project_id"])
+        issue["assignments"] = req_info["assignments"]
+        issue["category"] = issue["category"].lower()
+
+        try:
+            db.issues.find_one_and_update(
+                {"_id": issue_id},
+                {"$set": {"assignments": issue["assignments"]}},
+                upsert=False,
+            )
+            if updated_assignment["changes"]["completed"]["new_value"]:
+                webhooks.send_completed_assignment(
+                    updated_assignment, issue, user["token"].user
+                )
+        except:
+            print(traceback.format_exc())
+            raise HTTPException(
+                status_code=503, detail="Unable write issue to database"
+            )
+
+
+@router.put("/project/{project_id}/issue/{issue_id}")
 async def update_issue(user: auth.UserDep, issue_id, request: Request):
     req_info = await request.json()
     issue_id = ObjectId(issue_id)
