@@ -44,7 +44,9 @@ class JWTBearer(HTTPBearer):
                 )
             return credentials.credentials
         else:
-            raise HTTPException(status_code=403, detail="Invalid authorization code.")
+            raise HTTPException(
+                status_code=403, detail="Invalid authorization code."
+            )  # noqa
 
     def verify_jwt(self, token: str) -> bool:
         isTokenValid: bool = False
@@ -105,7 +107,7 @@ async def get_current_user(token: Annotated[str, Depends(JWTBearer())]):
 
 
 @router.get("/auth/discord")
-async def get_code_run_exchange(code: str, redirect_uri: str, request: Request):
+async def get_code_run_exchange(code: str, redirect_uri: str, request: Request):  # noqa
     redirect_url = urllib.parse.unquote(redirect_uri)
 
     data = {
