@@ -51,7 +51,7 @@ class JWTBearer(HTTPBearer):
 
         try:
             payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
-        except:
+        except:  # noqa
             payload = None
 
         if payload:
