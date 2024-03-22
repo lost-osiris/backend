@@ -1,0 +1,16 @@
+services:
+  web:
+    build: .
+    command: ./start.sh
+    volumes:
+      - ./src:/src/src
+    environment:
+      DOTENV_PATH: /src/db.env
+    ports:
+      - 8000:8000
+    # depends_on:
+    #   - db
+    #   - redis
+    # links:
+    #   - db
+    #   - redis

@@ -1,33 +1,22 @@
 import os
-import os
 import requests
 import urllib
 import datetime
-from typing import Annotated, Union
-from fastapi import Request, HTTPException, status, Depends, Header
+from typing import Annotated
+from fastapi import APIRouter, Request, HTTPException, status, Depends
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from fastapi.responses import RedirectResponse
 from jose import JWTError, jwt
-from fastapi import APIRouter, Request, HTTPException
 from . import utils
 
-from fastapi.security import (
-    OAuth2AuthorizationCodeBearer,
-    HTTPBearer,
-    OAuth2PasswordBearer,
-)
 from bson import ObjectId
-from datetime import datetime, timedelta
-from jose import JWTError, jwt
 from .models.token import TokenData
 from .models import user as user_models
 
 SECRET_KEY = os.getenv("CLIENT_SECRET")
 APP_ID = os.getenv("APPLICATION_ID")
 
-PROD_AUTH_REDIRECT = (
-    "https://modforge.gg/api/auth/discord?redirect_uri=https://modforge.gg"
-)
+PROD_AUTH_REDIRECT = "https://modforge-example-462zm053593pr.cpln.app/api/auth/discord?redirect_uri=https://localhost:3000"
 ALGORITHM = "HS256"
 ACCESS_TOKEN_EXPIRE_MINUTES = 7200
 
@@ -74,7 +63,9 @@ class JWTBearer(HTTPBearer):
 def create_access_token(data: dict):
     to_encode = data.copy()
 
-    expire = datetime.utcnow() + timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
+    expire = datetime.utcnow() + datetime.datetime.timedelta(
+        minutes=ACCESS_TOKEN_EXPIRE_MINUTES
+    )
 
     to_encode.update({"exp": expire})
     encoded_jwt = jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
@@ -122,9 +113,11 @@ async def get_code_run_exchange(code: str, redirect_uri: str, request: Request):
         "client_secret": SECRET_KEY,
         "grant_type": "authorization_code",
         "code": code,
-        "redirect_uri": f"{redirect_uri}/api/auth/discord?redirect_uri={redirect_uri}"
-        if os.getenv("IS_DEV")
-        else PROD_AUTH_REDIRECT,
+        "redirect_uri": (
+            f"{redirect_uri}/api/auth/discord?redirect_uri={redirect_uri}"
+            if os.getenv("IS_DEV")
+            else PROD_AUTH_REDIRECT
+        ),
     }
 
     headers = {"Content-Type": "application/x-www-form-urlencoded"}
@@ -157,8 +150,7 @@ async def get_code_run_exchange(code: str, redirect_uri: str, request: Request):
 
 
 @router.post("/auth/token/refresh")
-async def token_refresh():
-    ...
+async def token_refresh(): ...
 
 
 UserDep = Annotated[str, Depends(get_current_user)]
