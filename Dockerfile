@@ -28,7 +28,7 @@ RUN pyenv global "3.9.6" "3.9.6"
 
 WORKDIR /src/
 
-ADD start.sh .env pyproject.toml poetry.lock /src/
+ADD start.sh .env pyproject.toml poetry.lock .env /src/
 
 RUN poetry install 
 
@@ -36,4 +36,4 @@ ADD src /src/src
 
 EXPOSE 8000
 
-CMD ["uvicorn", "src.ticketing_system.api.index:app", "--host", "0.0.0.0", "--port", "8000", "--log-level", "error" ]
+CMD ["./start.sh"]

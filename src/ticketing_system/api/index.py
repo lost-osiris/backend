@@ -1,7 +1,3 @@
-from . import auth
-from .routes import issue, project, user, db_updates, issue_comments
-from .routes import cron_jobs, blogs
-
 from fastapi import FastAPI
 from fastapi.middleware.gzip import GZipMiddleware
 from fastapi.middleware.cors import CORSMiddleware
@@ -12,6 +8,9 @@ import os
 ENV = f".{os.getenv('ENV')}" or ""
 load_dotenv(f".env{ENV}")
 
+from . import auth
+from .routes import issue, project, user, db_updates, issue_comments
+from .routes import cron_jobs, blogs
 
 app = FastAPI()
 origins = [

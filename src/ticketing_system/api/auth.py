@@ -16,7 +16,7 @@ from .models import user as user_models
 SECRET_KEY = os.getenv("CLIENT_SECRET")
 APP_ID = os.getenv("APPLICATION_ID")
 
-PROD_AUTH_REDIRECT = "https://modforge-example-462zm053593pr.cpln.app/api/auth/discord?redirect_uri=https://localhost:3000"
+PROD_AUTH_REDIRECT = "https://modforge.mowens.io/api/auth/discord?redirect_uri=https://modforge.mowens.io"  # noqa
 ALGORITHM = "HS256"
 ACCESS_TOKEN_EXPIRE_MINUTES = 7200
 
@@ -65,7 +65,7 @@ class JWTBearer(HTTPBearer):
 def create_access_token(data: dict):
     to_encode = data.copy()
 
-    expire = datetime.utcnow() + datetime.datetime.timedelta(
+    expire = datetime.datetime.utcnow() + datetime.timedelta(
         minutes=ACCESS_TOKEN_EXPIRE_MINUTES
     )
 
