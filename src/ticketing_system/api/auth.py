@@ -16,7 +16,8 @@ from .models import user as user_models
 SECRET_KEY = os.getenv("CLIENT_SECRET")
 APP_ID = os.getenv("APPLICATION_ID")
 
-PROD_AUTH_REDIRECT = "https://modforge.mowens.io/api/auth/discord?redirect_uri=https://modforge.mowens.io"  # noqa
+BASE_URL = "https://backend-three-tawny.vercel.app"
+PROD_AUTH_REDIRECT = f"{BASE_URL}/api/auth/discord?redirect_uri={BASE_URL}"  # noqa
 ALGORITHM = "HS256"
 ACCESS_TOKEN_EXPIRE_MINUTES = 7200
 
